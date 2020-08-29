@@ -32,18 +32,18 @@ if system() == "Darwin":
         "select_all": "Command+A"
     }
     key_binding = {
-        "new": "<Meta_L><N>",
-        "open": "<Meta_L><O>",
-        "save": "<Meta_L><S>",
-        "save_as": "<Shift><Meta_L><S>",
-        "exit": "<Meta_L><W>",
-        "undo": "<Meta_L><Z>",
-        "redo": "<Shift><Meta_L><Z>",
-        "cut": "<Meta_L><X>",
-        "copy": "<Meta_L><C>",
-        "paste": "<Meta_L><V>",
-        "find": "<Meta_L><F>",
-        "select_all": "<Meta_L><A>"
+        "new": "<Meta_L><n>",
+        "open": "<Meta_L><o>",
+        "save": "<Meta_L><s>",
+        "save_as": "<Shift><Meta_L><s>",
+        "exit": "<Meta_L><w>",
+        "undo": "<Meta_L><z>",
+        "redo": "<Shift><Meta_L><z>",
+        "cut": "<Meta_L><x>",
+        "copy": "<Meta_L><c>",
+        "paste": "<Meta_L><v>",
+        "find": "<Meta_L><f>",
+        "select_all": "<Meta_L><a>"
     }
 else:
     accelerator = {
@@ -61,16 +61,16 @@ else:
         "select_all": "Ctrl+A"
     }
     key_binding = {
-        "new": "<Control-N>",
-        "open": "<Control-O>",
-        "save": "<Control-S>",
-        "save_as": "<Shift-Control-S>",
-        "exit": "<Control-W>",
-        "undo": "<Control-Z>",
-        "redo": "<Shift-Control-Z>",
-        "cut": "<Control-X>",
-        "copy": "<Control-C>",
-        "paste": "<Control-V>",
-        "find": "<Control-F>",
-        "select_all": "<Control-A>"
+        "new": "<Control-n>",
+        "open": "<Control-o>",
+        "save": "<Control-s>",
+        "save_as": "<Shift-Control-s>",
+        "exit": "<Control-w>",
+        "undo": "<Control-z>",
+        "redo": "<Shift-Control-z>",
+        "cut": "<Control-x>",
+        "copy": "<Control-c>",
+        "paste": "<Control-v>",
+        "find": "<Control-f>",
+        "select_all": "<Control-a>"
     }
