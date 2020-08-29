@@ -173,16 +173,16 @@ class PyEditor(Tk):
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(self, wrap='word', undo=True)
         self.content_text.pack(expand='yes', fill='both')
-        #self.content_text.bind(key_binding["new"], self.new_file)
-        #self.content_text.bind('<Control-n>', self.new_file)
-        #self.content_text.bind(key_binding["open"], self.open_file)
-        #self.content_text.bind('<Control-o>', self.open_file)
-        #self.content_text.bind(key_binding["save"], self.save)
-        #self.content_text.bind('<Control-s>', self.save)
-        #self.content_text.bind(key_binding["select_all"], self.select_all)
-        #self.content_text.bind('<Control-a>', self.select_all)
-        #self.content_text.bind('<Control-f>', self.find_text)
-        #self.content_text.bind(key_binding["find"], self.find_text)
+        # self.content_text.bind(key_binding["new"], self.new_file)
+        # self.content_text.bind('<Control-n>', self.new_file)
+        # self.content_text.bind(key_binding["open"], self.open_file)
+        # self.content_text.bind('<Control-o>', self.open_file)
+        # self.content_text.bind(key_binding["save"], self.save)
+        # self.content_text.bind('<Control-s>', self.save)
+        # self.content_text.bind(key_binding["select_all"], self.select_all)
+        # self.content_text.bind('<Control-a>', self.select_all)
+        # self.content_text.bind('<Control-f>', self.find_text)
+        # self.content_text.bind(key_binding["find"], self.find_text)
         self.content_text.bind(
             '<Any-KeyPress>', lambda e: self._update_line_num())
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
@@ -296,7 +296,7 @@ class PyEditor(Tk):
     def new_file(self, event=None):
         self.pos_x += 20
         self.pos_y += 20
-        sp.Popen(["python3", os.path.join(os.getcwd(), "editor.py"),
+        sp.Popen(["python3", __file__,
                   "-x", str(self.pos_x), "-y", str(self.pos_y)])
 
     def open_file(self, event=None):
@@ -337,9 +337,11 @@ class PyEditor(Tk):
         search_toplevel.title('查找文本')
         search_toplevel.transient(self)  # 总是让搜索框显示在其父窗体之上
         search_toplevel.resizable(False, False)
-        Label(search_toplevel, text="查找全部:").grid(row=0, column=0, sticky='e')
+        Label(search_toplevel, text="查找全部:").grid(
+            row=0, column=0, sticky='e')
         search_entry_widget = Entry(search_toplevel, width=25)
-        search_entry_widget.grid(row=0, column=1, padx=2, pady=2, sticky='we')
+        search_entry_widget.grid(
+            row=0, column=1, padx=2, pady=2, sticky='we')
         search_entry_widget.focus_set()
         ignore_case_value = IntVar()
         Checkbutton(search_toplevel, text='忽略大小写', variable=ignore_case_value).grid(
