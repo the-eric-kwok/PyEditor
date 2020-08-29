@@ -1,14 +1,16 @@
 import os
-from platform import platform, system
+from platform import system
 import json
-from editor_style import *
-from tkinter import *
-from tkinter import filedialog, messagebox
-from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
-from tooltip import Tooltip
 import subprocess as sp
 import getopt
 import sys
+
+from tkinter import *
+from tkinter import filedialog, messagebox
+from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
+
+from library.tooltip import Tooltip
+from library.editor_style import *
 
 
 class PyEditor(Tk):
