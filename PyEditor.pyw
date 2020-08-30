@@ -282,6 +282,7 @@ class PyEditor(Toplevel):
         '''
         更新行号
         '''
+        # FIXME 行号不跟随文本移动的bug
         if self.is_show_line_num.get():
             row, col = self.content_text.index("end").split('.')
             line_num_content = "\n".join([str(i) for i in range(1, int(row))])
@@ -352,7 +353,7 @@ class PyEditor(Toplevel):
 
             if type != "copy" and type != "save":
                 self._update_line_num()
-                if type != "new_file":
+                if type != "new_file" and type != "open":
                     self._mark_as_dirty_()
         return handle
 
@@ -406,7 +407,8 @@ class PyEditor(Toplevel):
     def open_file(self, event=None):
         # FIXME Windows下使用utf8编码会报错
         input_file = filedialog.askopenfilename(
-            filetypes=[("所有文件", "*.*"), ("文本文档", "*.txt")])
+            filetypes=[("所有文件", "*.*"), ("文本文档", "*.txt"),
+                       ("Markdown", "*.md"), ("Python code", "*.py")])
         if input_file:
             self.file_name = os.path.basename(input_file)
             self.title("%s - PyEditor" % self.file_name)
