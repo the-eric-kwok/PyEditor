@@ -1,6 +1,7 @@
-pyinstaller -w -F --icon='icon.icns' --add-data 'img/about.gif;img' `
---add-data 'img/copy.gif;img' --add-data 'img/cut.gif;img' `
---add-data 'img/editor.ico;img' --add-data 'img/find_text.gif;img' `
---add-data 'img/new_file.gif;img' --add-data 'img/open_file.gif;img' `
---add-data 'img/paste.gif;img' --add-data 'img/redo.gif;img' `
---add-data 'img/save.gif;img' --add-data 'img/undo.gif;img' PyEditor.pyw
+pyinstaller -w -F --icon='Icon.ico' --add-binary 'img/about.gif;img' `
+--add-binary 'img/copy.gif;img' --add-binary 'img/cut.gif;img' `
+--add-binary 'img/editor.ico;img' --add-binary 'img/find_text.gif;img' `
+--add-binary 'img/new_file.gif;img' --add-binary 'img/open_file.gif;img' `
+--add-binary 'img/paste.gif;img' --add-binary 'img/redo.gif;img' `
+--add-binary 'img/save.gif;img' --add-binary 'img/undo.gif;img' PyEditor.pyw
+pause
