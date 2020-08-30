@@ -15,57 +15,11 @@ from library.quitsavebox import QuitSaveBox
 
 
 class Root(Tk):
-    def __init__(self):
-        super().__init__()
-        self._create_menu_bar_()
-        self.geometry("0x0")
-
-    def _create_file_menu_(self, menu_bar):
-        '''
-        创建文件子菜单
-        '''
-        file_menu = Menu(menu_bar, tearoff=0)
-        file_menu.add_command(
-            label='新建', accelerator=accelerator["new"], command=self.new_file)
-        file_menu.add_command(
-            label='打开', accelerator=accelerator["open"], command=self.open_file)
-        file_menu.add_separator()
-        file_menu.add_command(
-            label='退出', accelerator=accelerator["exit"], command=self.exit_editor)
-        return file_menu
-
-    def _create_about_menu_(self, menu_bar):
-        '''
-        创建关于子菜单
-        '''
-        about_menu = Menu(menu_bar, tearoff=0)
-        about_menu.add_command(
-            label='关于', command=lambda: self.show_messagebox('关于'))
-        about_menu.add_command(
-            label='帮助', command=lambda: self.show_messagebox('帮助'))
-        return about_menu
-
-    def _create_menu_bar_(self):
-        '''
-        创建整个菜单栏
-        '''
-        menu_bar = Menu(self)
-        file_menu = self._create_file_menu_(menu_bar)
-        menu_bar.add_cascade(label='文件', menu=file_menu)  # 将文件菜单添加到菜单栏
-        about_menu = self._create_about_menu_(menu_bar)
-        menu_bar.add_cascade(label='关于', menu=about_menu)  # 将关于菜单添加到菜单栏
-        self["menu"] = menu_bar
-
-    def new_file(self):
-        new = PyEditor(sys.argv[1:])
-
-    def open_file(self):
-        # FIXME
-        new = PyEditor(sys.argv[1:])
-        new.open_file()
-
-    def exit_editor(self):
-        self.quit()
+    def exit(self):
+        # 判断apps中实例是否为0，若为0则退出
+        global apps
+        if len(apps) < 1:
+            self.quit()
 
 
 class PyEditor(Toplevel):
@@ -81,8 +35,9 @@ class PyEditor(Toplevel):
     pos_x = 0
     pos_y = 0
 
-    def __init__(self, argv):
+    def __init__(self, argv, parent):
         super().__init__()
+        self.parent = parent
         self._parse_argv_(argv)
         self._read_config_()
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
@@ -90,6 +45,10 @@ class PyEditor(Toplevel):
         self._create_shortcut_bar_()
         self._create_body_()
         self._create_right_popup_menu()
+
+    def destroy(self):
+        apps.remove(self)
+        super().destroy()
 
     def _parse_argv_(self, argv):
         '''
@@ -251,9 +210,17 @@ class PyEditor(Toplevel):
             self.icon_res.append(tool_icon)
 
     def _mark_as_dirty_(self):
+        if self.file_name:
+            self.title("%s* - PyEditor" % self.file_name)
+        else:
+            self.title("New* - PyEditor")
         self.dirty = True
 
     def _mark_as_clean_(self):
+        if self.file_name:
+            self.title("%s - PyEditor" % self.file_name)
+        else:
+            self.title("New - PyEditor")
         self.dirty = False
 
     def _create_body_(self):
@@ -353,7 +320,8 @@ class PyEditor(Toplevel):
             content = self.content_text.get(1.0, 'end')
             with open(file_name, 'w') as the_file:
                 the_file.write(content)
-            self.title("%s - PyEditor" % os.path.basename(file_name))
+            self.file_name = os.path.basename(file_name)
+            self.title("%s - PyEditor" % self.file_name)
         except IOError:
             messagebox.showwarning("保存", "保存失败！")
 
@@ -383,7 +351,8 @@ class PyEditor(Toplevel):
 
             if type != "copy" and type != "save":
                 self._update_line_num()
-                self._mark_as_dirty_()
+                if type != "new_file":
+                    self._mark_as_dirty_()
         return handle
 
     def change_theme(self):
@@ -428,15 +397,18 @@ class PyEditor(Toplevel):
     def new_file(self, event=None):
         self.pos_x += 20
         self.pos_y += 20
-        new = PyEditor(['-x', str(self.pos_x), '-y', str(self.pos_y)])
+        new = PyEditor(['-x', str(self.pos_x), '-y',
+                        str(self.pos_y)], self.parent)
         global apps
         apps.append(new)
 
     def open_file(self, event=None):
+        # FIXME Windows下使用utf8编码会报错
         input_file = filedialog.askopenfilename(
             filetypes=[("所有文件", "*.*"), ("文本文档", "*.txt")])
         if input_file:
-            self.title("%s - PyEditor" % os.path.basename(input_file))
+            self.file_name = os.path.basename(input_file)
+            self.title("%s - PyEditor" % self.file_name)
             self.file_name = input_file
             self.content_text.delete(1.0, END)
             with open(input_file, 'r') as _file:
@@ -538,28 +510,17 @@ class PyEditor(Toplevel):
                 self.save()
         else:
             self.destroy()
+        self.parent.exit()
 
 
 if "__main__" == __name__:
     root = Root()
-    # root.withdraw()
+    root.withdraw()
     apps = []
-    app = PyEditor(sys.argv[1:])
+    app = PyEditor(sys.argv[1:], root)
     apps.append(app)
-    app.mainloop()
-    # TODO destroy root after all Toplevel quit
-    '''
     app.lift()
     app.attributes('-topmost', True)
     app.after_idle(app.attributes, '-topmost', False)
-    if system() == 'Darwin':
-        # macOS 将焦点切换到编辑器窗口
-        os.system(
-            '''
-    '''
-        '/usr/bin/osascript - e 'tell app "Finder" to set frontmost of process "Python" to true'
-        '''
-    '''
-            )
     app.focus_force()
-    '''
+    app.mainloop()
