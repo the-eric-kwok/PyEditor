@@ -248,9 +248,9 @@ class PyEditor(Toplevel):
         self.content_text.bind(
             '<Any-KeyPress>', lambda e: self._update_line_num()
         )
-
+        # TODO 使用 <Any-KeyPress> 更新高亮当前行
         self.content_text.bind(
-            '<Any-KeyPress>', lambda e: self._mark_as_dirty_()
+            '<Any-KeyPress>', lambda e: self._mark_as_dirty_()  # TODO 修改为仅绑定键盘输入，取消绑定鼠标输入
         )
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
@@ -271,6 +271,7 @@ class PyEditor(Toplevel):
         popup_menu.add_separator()
         popup_menu.add_command(label='全选', command=self.select_all)
         if system() == "Darwin":
+            # macOS 的右键为鼠标第二键
             self.content_text.bind(
                 '<Button-2>', lambda event: popup_menu.tk_popup(event.x_root, event.y_root))
         else:
@@ -294,7 +295,7 @@ class PyEditor(Toplevel):
             self.line_number_bar.config(state='disabled')
 
     def _toggle_line_num(self):
-        # TODO 切换行号显示并且重新渲染主界面
+        # TODO 切换行号显示并且重新渲染主界面
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
         self._write_config_()
         if self.is_show_line_num.get():
