@@ -9,6 +9,8 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
 
+import chardet
+
 from library.editor_style import *
 from library.tooltip import Tooltip
 from library.quitsavebox import QuitSaveBox
@@ -353,7 +355,7 @@ class PyEditor(Toplevel):
 
             if type != "copy" and type != "save":
                 self._update_line_num()
-                if type != "new_file" and type != "open":
+                if type != "new_file" and type != "open_file":
                     self._mark_as_dirty_()
         return handle
 
@@ -405,17 +407,24 @@ class PyEditor(Toplevel):
         apps.append(new)
 
     def open_file(self, event=None):
-        # FIXME Windows下使用utf8编码会报错
+        # FIXME Windows下使用utf8编码会报错 to be check
+        # TODO 若编辑器为脏，则在打开新文件之前询问
         input_file = filedialog.askopenfilename(
-            filetypes=[("所有文件", "*.*"), ("文本文档", "*.txt"),
-                       ("Markdown", "*.md"), ("Python code", "*.py")])
+            filetypes=[("Text file", "*.txt"), ("Markdown", "*.md"),
+                       ("Python code", "*.py"), ("Python code", "*.pyw"),
+                       ("All", "*.*")],
+            title="选择一个文件")
         if input_file:
             self.file_name = os.path.basename(input_file)
             self.title("%s - PyEditor" % self.file_name)
             self.file_name = input_file
             self.content_text.delete(1.0, END)
-            with open(input_file, 'r') as _file:
-                self.content_text.insert(1.0, _file.read())
+            with open(input_file, 'rb') as _file:
+                byte = _file.read()
+                result = chardet.detect(byte)
+                print(result['encoding'])
+                text = byte.decode(encoding=result['encoding'])
+                self.content_text.insert(1.0, text)
 
     def save(self, event=None):
         if not self.file_name:
