@@ -1,5 +1,5 @@
 import os
-from platform import system
+from platform import platform, system
 import json
 import subprocess as sp
 import getopt
@@ -9,17 +9,72 @@ from tkinter import *
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
 
-from library.tooltip import Tooltip
 from library.editor_style import *
+from library.tooltip import Tooltip
+from library.quitsavebox import QuitSaveBox
 
 
-class PyEditor(Tk):
+class Root(Tk):
+    def __init__(self):
+        super().__init__()
+        self._create_menu_bar_()
+        self.geometry("0x0")
+
+    def _create_file_menu_(self, menu_bar):
+        '''
+        创建文件子菜单
+        '''
+        file_menu = Menu(menu_bar, tearoff=0)
+        file_menu.add_command(
+            label='新建', accelerator=accelerator["new"], command=self.new_file)
+        file_menu.add_command(
+            label='打开', accelerator=accelerator["open"], command=self.open_file)
+        file_menu.add_separator()
+        file_menu.add_command(
+            label='退出', accelerator=accelerator["exit"], command=self.exit_editor)
+        return file_menu
+
+    def _create_about_menu_(self, menu_bar):
+        '''
+        创建关于子菜单
+        '''
+        about_menu = Menu(menu_bar, tearoff=0)
+        about_menu.add_command(
+            label='关于', command=lambda: self.show_messagebox('关于'))
+        about_menu.add_command(
+            label='帮助', command=lambda: self.show_messagebox('帮助'))
+        return about_menu
+
+    def _create_menu_bar_(self):
+        '''
+        创建整个菜单栏
+        '''
+        menu_bar = Menu(self)
+        file_menu = self._create_file_menu_(menu_bar)
+        menu_bar.add_cascade(label='文件', menu=file_menu)  # 将文件菜单添加到菜单栏
+        about_menu = self._create_about_menu_(menu_bar)
+        menu_bar.add_cascade(label='关于', menu=about_menu)  # 将关于菜单添加到菜单栏
+        self["menu"] = menu_bar
+
+    def new_file(self):
+        new = PyEditor(sys.argv[1:])
+
+    def open_file(self):
+        # FIXME
+        new = PyEditor(sys.argv[1:])
+        new.open_file()
+
+    def exit_editor(self):
+        self.quit()
+
+
+class PyEditor(Toplevel):
     icon_res = []
     file_name = None
     dirty = False  # 标记文件是否修改过，默认为未修改，可直接关闭，不用提示保存
     config = {
-        "show_line_num": True,
-        "hightlight_current_line": True,
+        "line_num": True,
+        "highlight": True,
         "theme": "Default"
     }
     config_file = os.path.join(os.path.curdir, ".config.json")
@@ -87,7 +142,7 @@ class PyEditor(Tk):
         wm_val = '750x450+%d+%d' % (self.pos_x, self.pos_y)
         self.geometry(wm_val)
         self.iconbitmap("img/editor.ico")
-        self.protocol('WM_DELETE_WINDOW', self.exit_editor)
+        self.protocol('WM_DELETE_WINDOW', self.close_editor)
 
     def _create_file_menu_(self, menu_bar):
         '''
@@ -137,10 +192,11 @@ class PyEditor(Tk):
         '''
         view_menu = Menu(menu_bar, tearoff=0)
         self.is_show_line_num = IntVar()
-        self.is_show_line_num.set(1)
+        self.is_show_line_num.set(int(self.config["line_num"]))
         view_menu.add_checkbutton(
-            label='显示行号', variable=self.is_show_line_num, command=self._update_line_num)
+            label='显示行号', variable=self.is_show_line_num, command=self._toggle_line_num)
         self.is_highlight_line = IntVar()
+        self.is_highlight_line.set(int(self.config["highlight"]))
         view_menu.add_checkbutton(
             label='高亮当前行', variable=self.is_highlight_line, command=self._toggle_highlight)
         # 在主题菜单中再添加一个子菜单列表
@@ -194,32 +250,43 @@ class PyEditor(Tk):
             Tooltip(tool_btn, text=tip)  # 鼠标停留会出现提示信息
             self.icon_res.append(tool_icon)
 
+    def _mark_as_dirty_(self):
+        self.dirty = True
+
+    def _mark_as_clean_(self):
+        self.dirty = False
+
     def _create_body_(self):
         '''
         创建程序主体
         '''
         # 创建行号栏 （takefocus=0 屏蔽焦点）
-        self.line_number_bar = Text(self, width=4, padx=3, takefocus=0, border=0,
-                                    background='#F0E68C', state='disabled')
-        self.line_number_bar.pack(side='left', fill='y')
+        if self.config["line_num"]:
+            self.line_number_bar = Text(self, width=4, padx=3, takefocus=0, border=0,
+                                        background='#F0E68C', state='disabled')
+            self.line_number_bar.pack(side='left', fill='y')
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(self, wrap='word', undo=True)
         self.content_text.pack(expand='yes', fill='both')
-        self.content_text.bind(key_binding["new"], self.new_file)
-        # self.content_text.bind('<Control-n>', self.new_file)
-        self.content_text.bind(key_binding["open"], self.open_file)
-        # self.content_text.bind('<Control-o>', self.open_file)
-        self.content_text.bind(key_binding["save"], self.save)
-        # self.content_text.bind('<Control-s>', self.save)
-        self.content_text.bind(key_binding["select_all"], self.select_all)
-        # self.content_text.bind('<Control-a>', self.select_all)
-        # self.content_text.bind('<Control-f>', self.find_text)
-        self.content_text.bind(key_binding["find"], self.find_text)
+        self.content_text.bind(key_binding["new"][0], self.new_file)
+        self.content_text.bind(key_binding["new"][1], self.new_file)
+        self.content_text.bind(key_binding["open"][0], self.open_file)
+        self.content_text.bind(key_binding["open"][1], self.open_file)
+        self.content_text.bind(key_binding["save"][0], self.save)
+        self.content_text.bind(key_binding["save"][1], self.save)
+        self.content_text.bind(key_binding["select_all"][0], self.select_all)
+        self.content_text.bind(key_binding["select_all"][1], self.select_all)
+        self.content_text.bind(key_binding["find"][0], self.find_text)
+        self.content_text.bind(key_binding["find"][1], self.find_text)
         self.content_text.bind(
-            '<Any-KeyPress>', lambda e: self._update_line_num())
+            '<Any-KeyPress>', lambda e: self._update_line_num()
+        )
+
+        self.content_text.bind(
+            '<Any-KeyPress>', lambda e: self._mark_as_dirty_()
+        )
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
-
         # 创建滚动条
         scroll_bar = Scrollbar(self.content_text)
         scroll_bar["command"] = self.content_text.yview
@@ -259,7 +326,20 @@ class PyEditor(Tk):
             self.line_number_bar.delete('1.0', 'end')
             self.line_number_bar.config(state='disabled')
 
+    def _toggle_line_num(self):
+        # TODO 切换行号显示并且重新渲染主界面
+        self.config["show_line_num"] = bool(self.is_show_line_num.get())
+        self._write_config_()
+        if self.is_show_line_num.get():
+            pass
+        else:
+            pass
+        pass
+
     def _toggle_highlight(self):
+        # TODO 将此项与配置文件同步
+        self.config["highlight"] = bool(self.is_highlight_line.get())
+        self._write_config_()
         if self.is_highlight_line.get():
             self.content_text.tag_remove("active_line", 1.0, "end")
             self.content_text.tag_add(
@@ -303,7 +383,7 @@ class PyEditor(Tk):
 
             if type != "copy" and type != "save":
                 self._update_line_num()
-                # TODO: 将文件标记为脏的
+                self._mark_as_dirty_()
         return handle
 
     def change_theme(self):
@@ -311,6 +391,7 @@ class PyEditor(Tk):
         更改主题
         '''
         # TODO 更换字体功能
+        # TODO 将配置文件与此项保持同步
         selected_theme = self.theme_choice.get()
         fg_bg = theme_color.get(selected_theme)
         fg_color, bg_color = fg_bg.split('.')
@@ -347,8 +428,9 @@ class PyEditor(Tk):
     def new_file(self, event=None):
         self.pos_x += 20
         self.pos_y += 20
-        sp.Popen(["python3", __file__,
-                  "-x", str(self.pos_x), "-y", str(self.pos_y)])
+        new = PyEditor(['-x', str(self.pos_x), '-y', str(self.pos_y)])
+        global apps
+        apps.append(new)
 
     def open_file(self, event=None):
         input_file = filedialog.askopenfilename(
@@ -365,13 +447,16 @@ class PyEditor(Tk):
             self.save_as()
         else:
             self._write_to_file(self.file_name)
+            self._mark_as_clean_()
 
     def save_as(self, event=None):
         input_file = filedialog.asksaveasfilename(
-            filetypes=[("All Files", "*.*"), ("文本文档", "*.txt")])
+            filetypes=[("All Files", "*.*"), ("文本文档", "*.txt")]
+        )
         if input_file:
             self.file_name = input_file
             self._write_to_file(self.file_name)
+            self._mark_as_clean_()
 
     def find_text(self, event=None):
         '''
@@ -426,17 +511,55 @@ class PyEditor(Tk):
         '''
         处理编辑器退出操作
         '''
+        _dirty = False
+        for app in apps:
+            if _dirty or app.dirty:
+                _dirty = True
+        if _dirty:
+            dialog = QuitSaveBox(self)
+            self.wait_window(dialog.top)
+            if dialog.get() == "<<Exit>>":
+                self.quit()
+            elif dialog.get() == "<<Save>>":
+                self.save()
+        else:
+            self.quit()
+
+    def close_editor(self):
+        '''
+        处理编辑器关闭操作
+        '''
         if self.dirty:
-            if messagebox.askokcancel("退出?", "确定退出吗?"):
+            dialog = QuitSaveBox(self)
+            self.wait_window(dialog.top)
+            if dialog.get() == "<<Exit>>":
                 self.destroy()
+            elif dialog.get() == "<<Save>>":
+                self.save()
         else:
             self.destroy()
 
 
 if "__main__" == __name__:
+    root = Root()
+    # root.withdraw()
+    apps = []
     app = PyEditor(sys.argv[1:])
+    apps.append(app)
+    app.mainloop()
+    # TODO destroy root after all Toplevel quit
+    '''
     app.lift()
     app.attributes('-topmost', True)
     app.after_idle(app.attributes, '-topmost', False)
+    if system() == 'Darwin':
+        # macOS 将焦点切换到编辑器窗口
+        os.system(
+            '''
+    '''
+        '/usr/bin/osascript - e 'tell app "Finder" to set frontmost of process "Python" to true'
+        '''
+    '''
+            )
     app.focus_force()
-    app.mainloop()
+    '''

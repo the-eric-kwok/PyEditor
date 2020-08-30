@@ -2,3 +2,6 @@
 *config*
 .DS*
 *setting*
+dist
+build
+*.spec

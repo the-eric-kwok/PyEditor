@@ -31,19 +31,19 @@ if system() == "Darwin":
         "find": "Command+F",
         "select_all": "Command+A"
     }
-    key_binding = {
-        "new": "<Meta_L><n>",
-        "open": "<Meta_L><o>",
-        "save": "<Meta_L><s>",
-        "save_as": "<Shift><Meta_L><s>",
-        "exit": "<Meta_L><w>",
-        "undo": "<Meta_L><z>",
-        "redo": "<Shift><Meta_L><z>",
-        "cut": "<Meta_L><x>",
-        "copy": "<Meta_L><c>",
-        "paste": "<Meta_L><v>",
-        "find": "<Meta_L><f>",
-        "select_all": "<Meta_L><a>"
+    key_binding = {  # TODO: macOS 下按键绑定无效
+        "new": ["<Meta-n>", "<Meta-N>"],
+        "open": ["<Meta-o>", "<Meta-O>"],
+        "save": ["<Meta-s>", "<Meta-S>"],
+        "save_as": ["<Shift-Meta-s>", "<Shift-Meta-S>"],
+        "exit": ["<Meta-w>", "<Meta-W>"],
+        "undo": ["<Meta-z>", "<Meta-Z>"],
+        "redo": ["<Shift-Meta-z>", "<Shift-Meta-Z>"],
+        "cut": ["<Meta-x>", "<Meta-X>"],
+        "copy": ["<Meta-c>", "<Meta-C>"],
+        "paste": ["<Meta-v>", "<Meta-V>"],
+        "find": ["<Meta-f>", "<Meta-F>"],
+        "select_all": ["<Meta-a>", "<Meta-A>"]
     }
 else:
     accelerator = {
@@ -61,16 +61,16 @@ else:
         "select_all": "Ctrl+A"
     }
     key_binding = {
-        "new": "<Control-n>",
-        "open": "<Control-o>",
-        "save": "<Control-s>",
-        "save_as": "<Shift-Control-s>",
-        "exit": "<Control-w>",
-        "undo": "<Control-z>",
-        "redo": "<Shift-Control-z>",
-        "cut": "<Control-x>",
-        "copy": "<Control-c>",
-        "paste": "<Control-v>",
-        "find": "<Control-f>",
-        "select_all": "<Control-a>"
+        "new": ["<Control-n>", "<Control-N>"],
+        "open": ["<Control-o>", "<Control-O>"],
+        "save": ["<Control-s>", "<Control-S>"],
+        "save_as": ["<Shift-Control-s>", "<Shift-Control-S>"],
+        "exit": ["<Control-w>", "<Control-W>"],
+        "undo": ["<Control-z>", "<Control-Z>"],
+        "redo": ["<Shift-Control-z>", "<Shift-Control-Z>"],
+        "cut": ["<Control-x>", "<Control-X>"],
+        "copy": ["<Control-c>", "<Control-C>"],
+        "paste": ["<Control-v>", "<Control-V>"],
+        "find": ["<Control-f>", "<Control-F>"],
+        "select_all": ["<Control-a>", "<Control-A>"]
     }
