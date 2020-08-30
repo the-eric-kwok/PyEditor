@@ -100,7 +100,7 @@ class PyEditor(Toplevel):
             self.pos_y = pos_y
         wm_val = '750x450+%d+%d' % (self.pos_x, self.pos_y)
         self.geometry(wm_val)
-        self.iconbitmap("img/editor.ico")
+        self.iconbitmap(resource_path("editor.ico"))
         self.protocol('WM_DELETE_WINDOW', self.close_editor)
 
     def _create_file_menu_(self, menu_bar):
@@ -202,7 +202,7 @@ class PyEditor(Toplevel):
         shortcut_bar.pack(fill='x')
 
         for icon, tip in zip(ICONS, TIPS):
-            tool_icon = PhotoImage(file=os.path.join('img', '%s.gif' % icon))
+            tool_icon = PhotoImage(file=resource_path('%s.gif' % icon))
             tool_btn = Button(shortcut_bar, image=tool_icon,
                               command=self._shortcut_action(icon))
             tool_btn.pack(side='left')
@@ -511,6 +511,16 @@ class PyEditor(Toplevel):
         else:
             self.destroy()
         self.parent.exit()
+
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = os.path.join(sys._MEIPASS, 'img')
+    except Exception:
+        base_path = os.path.abspath(os.path.join(".", "img"))
+    return os.path.join(base_path, relative_path)
 
 
 if "__main__" == __name__:

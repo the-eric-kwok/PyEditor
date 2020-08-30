@@ -19,7 +19,7 @@ ez_setup.use_setuptools()
 APP = ['PyEditor.pyw']
 DATA_FILES = ['PyEditor.pyw']
 OPTIONS = {
-    "iconfile": "img/editor.ico"
+    "iconfile": "Icon.icns"
 }
 
 if sys.platform == 'darwin':
