@@ -47,6 +47,7 @@ class PyEditor(Toplevel):
         self._create_shortcut_bar_()
         self._create_body_()
         self._create_right_popup_menu()
+        self.change_theme()
 
     def destroy(self):
         apps.remove(self)
@@ -167,7 +168,7 @@ class PyEditor(Toplevel):
         self.theme_choice.set(self.config["theme"])
         for k in sorted(theme_color):
             themes_menu.add_radiobutton(
-                label=k, variable=self.theme_choice, command=self.change_theme)
+                label=k, variable=self.theme_choice, command=self.toggle_change_theme)
         return view_menu
 
     def _create_about_menu_(self, menu_bar):
@@ -308,7 +309,6 @@ class PyEditor(Toplevel):
         pass
 
     def _toggle_highlight(self):
-        # TODO 将此项与配置文件同步
         self.config["highlight"] = bool(self.is_highlight_line.get())
         self._write_config_()
         if self.is_highlight_line.get():
@@ -359,12 +359,19 @@ class PyEditor(Toplevel):
                     self._mark_as_dirty_()
         return handle
 
+    def toggle_change_theme(self):
+        '''
+        保存主题并调用更改主题方法
+        '''
+        self.config["theme"] = self.theme_choice.get()
+        self._write_config_()
+        self.change_theme()
+
     def change_theme(self):
         '''
         更改主题
         '''
         # TODO 更换字体功能
-        # TODO 将配置文件与此项保持同步
         selected_theme = self.theme_choice.get()
         fg_bg = theme_color.get(selected_theme)
         fg_color, bg_color = fg_bg.split('.')
@@ -407,7 +414,6 @@ class PyEditor(Toplevel):
         apps.append(new)
 
     def open_file(self, event=None):
-        # FIXME Windows下使用utf8编码会报错 to be check
         # TODO 若编辑器为脏，则在打开新文件之前询问
         input_file = filedialog.askopenfilename(
             filetypes=[("Text file", "*.txt"), ("Markdown", "*.md"),
