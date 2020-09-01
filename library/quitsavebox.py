@@ -18,7 +18,7 @@ class QuitSaveBox:
         yes_button.place(relx=0.15, rely=0.8, anchor='c')
         top.protocol('WM_DELETE_WINDOW', self.no)
         top.bind('<Return>', (lambda e, b=no_button: b.invoke()))
-        top.grab_set()
+        top.grab_set()  # 拦截对底下窗口的点击
 
     def yes(self):
         self.answer = "<<Exit>>"
