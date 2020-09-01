@@ -1,7 +1,6 @@
 import os
-from platform import platform, system
+from platform import system
 import json
-import subprocess as sp
 import getopt
 import sys
 

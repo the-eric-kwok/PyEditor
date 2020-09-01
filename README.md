@@ -2,6 +2,10 @@
 Simple text editor made with python.
 
 ## Run
+**Dependency**
+1. chardet
+   Install by `pip3 install chardet`
+
 Run in terminal
 ```
 python3 editor.pyw
@@ -12,8 +16,9 @@ python3 editor.pyw
    **Dependency**
    
    1. py2app
-   
-      Install by `pip3 install py2app`
+
+      Will be satisfied automatically, 
+      or you can install manually with `pip3 install py2app`
    
    then run
    ```
