@@ -17,11 +17,10 @@ class FontPanel:
 
         # 创建字体选择器区
         box_frame = tk.Frame(top)
-        box_frame.pack(fill='x')
-        # FIXME 修复选择器排列的问题
+        box_frame.pack()
         # 字体选择器
         font_selector = tk.Frame(box_frame)
-        font_selector.pack(side="left")
+        font_selector.pack(side="left", fill='y')
         label = tk.Label(font_selector, text="字体")
         label.pack()
         frame = tk.Frame(font_selector)
@@ -29,7 +28,7 @@ class FontPanel:
         font_scrollbar = tk.Scrollbar(frame, orient=tk.VERTICAL)
         self.font_box = tk.Listbox(
             frame, yscrollcommand=font_scrollbar.set)
-        self.font_box.pack(side="left", fill='x')
+        self.font_box.pack(side="left")
         # 将选择操作绑定到 onSelect 方法
         self.font_box.bind('<<ListboxSelect>>', self.onSelect)
         font_scrollbar.config(command=self.font_box.yview)
@@ -40,16 +39,16 @@ class FontPanel:
 
         # 字号选择器
         fontsize_selector = tk.Frame(box_frame)
-        fontsize_selector.pack(side="left")
-        label = tk.Label(font_selector, text="字号")
+        fontsize_selector.pack(side="left", fill='y')
+        label = tk.Label(fontsize_selector, text="字号")
         label.pack()
-        frame = tk.Frame(font_selector)
+        frame = tk.Frame(fontsize_selector)
         frame.pack()
         fontsize_scrollbar = tk.Scrollbar(
             frame, orient=tk.VERTICAL)
         self.fontsize_box = tk.Listbox(
             frame, yscrollcommand=fontsize_scrollbar.set, width=10)
-        self.fontsize_box.pack(side="left", fill='x')
+        self.fontsize_box.pack(side="left")
         # 将选择操作绑定到 onSelect 方法
         self.fontsize_box.bind("<<ListboxSelect>>", self.onSelect)
         fontsize_scrollbar.config(command=self.fontsize_box.yview)
