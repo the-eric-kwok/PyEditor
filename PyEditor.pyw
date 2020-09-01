@@ -12,6 +12,7 @@ import tkinter.font as tkFont
 
 import chardet
 
+from library.FontPanel import FontPanel
 from library.editor_style import *
 from library.tooltip import Tooltip
 from library.quitsavebox import QuitSaveBox
@@ -41,6 +42,7 @@ class PyEditor(Toplevel):
     def __init__(self, argv, parent):
         super().__init__()
         self.parent = parent
+        self.custom_font = tkFont.Font(self, family="Helvetica", size=12)
         self._parse_argv_(argv)
         self._read_config_()
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
@@ -162,6 +164,8 @@ class PyEditor(Toplevel):
         self.is_highlight_line.set(int(self.config["highlight"]))
         view_menu.add_checkbutton(
             label='高亮当前行', variable=self.is_highlight_line, command=self._toggle_highlight)
+        view_menu.add_command(
+            label='字体设置', command=self.toggle_font)
         # 在主题菜单中再添加一个子菜单列表
         themes_menu = Menu(menu_bar, tearoff=0)
         view_menu.add_cascade(label='主题', menu=themes_menu)
@@ -237,7 +241,8 @@ class PyEditor(Toplevel):
                                         background='#F0E68C', state='disabled')
             self.line_number_bar.pack(side='left', fill='y')
         # 创建文本输入框(undo=True启用撤销机制)
-        self.content_text = Text(self, wrap='word', undo=True)
+        self.content_text = Text(
+            self, wrap='word', undo=True, font=self.custom_font)
         self.content_text.pack(expand='yes', fill='both')
         self.content_text.bind(key_binding["new"][0], self.new_file)
         self.content_text.bind(key_binding["new"][1], self.new_file)
@@ -377,6 +382,10 @@ class PyEditor(Toplevel):
         fg_bg = theme_color.get(selected_theme)
         fg_color, bg_color = fg_bg.split('.')
         self.content_text.config(bg=bg_color, fg=fg_color)
+
+    def toggle_font(self):
+        dialog = FontPanel(self)
+        self.wait_window(dialog.top)
 
     def handle_menu_action(self, action_type):
         '''

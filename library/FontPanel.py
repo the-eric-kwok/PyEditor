@@ -1,5 +1,6 @@
 import tkinter as tk
 import tkinter.font as tkFont
+from tkinter.font import families
 
 
 class FontPanel:
@@ -7,6 +8,7 @@ class FontPanel:
     font_size = 12
 
     def __init__(self, parent) -> None:
+        self.parent = parent
         top = self.top = tk.Toplevel(parent)
         top.resizable(False, False)
         #top.geometry("200x300+%d+%d" % (500, 500))
@@ -56,8 +58,6 @@ class FontPanel:
         for item in range(8, 32):
             self.fontsize_box.insert(tk.END, item)
 
-        # TODO 字号选择器
-
         # 创建字体预览区
         text_frame = tk.Frame(top, width=300, height=100)
         text_frame.pack(fill=None, expand=False)
@@ -85,12 +85,12 @@ class FontPanel:
             family=self.font_family, size=self.font_size)
 
     def onOk(self):
-        print("User clicked OK")
-        print("Selected font is %s, size %d" %
-              (self.font_family, self.font_size))
+        self.parent.custom_font.configure(
+            family=self.font_family, size=self.font_size)
+        self.top.destroy()
 
     def onCancel(self):
-        print("User clicked cancel")
+        self.top.destroy()
 
 
 if __name__ == "__main__":
