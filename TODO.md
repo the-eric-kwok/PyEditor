@@ -18,4 +18,4 @@
 - [x] FIXME: 滚动时行号不变大
 - [x] FIXME: 字体放大时行号不变化
 - [ ] FIXME: 将文本编辑器和行号栏都配置成同一个行高（行号错位bug）
-- [ ] FIXME: windows 下点击文本框会跳回首行
+- [ ] FIXME: 点击文本框会跳回首行 (Introduced by @e9b827d)
