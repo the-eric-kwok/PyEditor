@@ -51,7 +51,7 @@ else:
         "save_as": "Shift+Ctrl+S",
         "exit": "Alt+F4",
         "undo": "Ctrl+Z",
-        "redo": "Shift+Ctrl+Z",
+        "redo": "Shift+Y",
         "cut": "Ctrl+X",
         "copy": "Ctrl+C",
         "paste": "Ctrl+V",

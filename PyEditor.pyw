@@ -5,7 +5,7 @@ import sys
 
 from tkinter import *
 from tkinter import filedialog, messagebox
-from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
+from tkinter.ttk import Scrollbar, Checkbutton, Label, Button, Style
 import tkinter.font as tkFont
 
 import chardet
@@ -240,29 +240,44 @@ class PyEditor(Toplevel):
         '''
         创建程序主体
         '''
-        # 创建行号栏 （takefocus=0 屏蔽焦点）
-        if self.config["line_num"]:
-            self.line_number_bar = Text(self, width=3, padx=3, takefocus=0, border=0,
-                                        background="#F0E68C", state='disabled', font=self.custom_font)
-            self.line_number_bar.pack(side='left', fill='y')
+        style = Style(self)
+        style.configure('Text', rowheight=40)  # SOLUTION
+
+        # TODO 将文本框和行号栏的行高设为一致的，以解决长文本行号错位的问题
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(
             self, wrap='word', undo=True, font=self.custom_font, exportselection=False)
-        self.content_text.pack(expand='yes', fill='both')
+        # 创建行号栏 （takefocus=0 屏蔽焦点）
+        self.line_number_bar = Text(self, width=3, padx=3, takefocus=0, border=0,
+                                    background="#F0E68C", state='disabled', font=self.custom_font)
+        # 创建滚动条
+        self.scroll_bar = Scrollbar(self.content_text)
+        self.scroll_bar["command"] = self.__on_scrollbar__
+        self.content_text["yscrollcommand"] = self.__on_textscroll__
+        self.line_number_bar["yscrollcommand"] = self.__on_textscroll__
+        self.scroll_bar.pack(side='right', fill='y')
+        self.content_text.pack(side='right', expand='yes', fill='both')
+
+        self.line_number_bar.pack(side='right', fill='y')
+
+        # Binding part
         self.bind(key_binding["new"][0], self.new_file)
         self.bind(key_binding["new"][1], self.new_file)
         self.bind(key_binding["open"][0], self.open_file)
         self.bind(key_binding["open"][1], self.open_file)
         self.bind(key_binding["save"][0], self.save)
         self.bind(key_binding["save"][1], self.save)
+        if sys.platform == "win32":
+            self.bind(key_binding["save_as"][0], self.save_as)
+            self.bind(key_binding["save_as"][1], self.save_as)
         self.bind(key_binding["select_all"][0], self.select_all)
         self.bind(key_binding["select_all"][1], self.select_all)
         self.bind(key_binding["find"][0], self.find_text)
         self.bind(key_binding["find"][1], self.find_text)
-        self.bind(
-            '<Any-KeyPress>', lambda e: self._update_line_num()
-        )
+        self.bind('<Any-KeyPress>', lambda e: self._update_line_num())
+        self.bind("<Button-1>", lambda e: self._update_line_num())
         # TODO 使用 <Any-KeyPress> 更新高亮当前行
+
         # 将鼠标左键点击绑定为将焦点赋予content_text
         self.content_text.bind("<Button-1>", lambda e: self.grab_focus())
         self.content_text.bind(
@@ -271,11 +286,14 @@ class PyEditor(Toplevel):
         )
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
-        # 创建滚动条
-        scroll_bar = Scrollbar(self.content_text)
-        scroll_bar["command"] = self.content_text.yview
-        self.content_text["yscrollcommand"] = scroll_bar.set
-        scroll_bar.pack(side='right', fill='y')
+
+    def __on_scrollbar__(self, *args):
+        self.content_text.yview(*args)
+        self.line_number_bar.yview(*args)
+
+    def __on_textscroll__(self, *args):
+        self.scroll_bar.set(*args)
+        self.__on_scrollbar__("moveto", args[0])
 
     def _create_right_popup_menu(self):
         '''
@@ -299,7 +317,6 @@ class PyEditor(Toplevel):
         '''
         更新行号
         '''
-        # FIXME 行号不跟随文本移动的bug
         if self.is_show_line_num.get():
             row, col = self.content_text.index("end").split('.')
             line_num_content = "\n".join([str(i) for i in range(1, int(row))])
@@ -313,13 +330,13 @@ class PyEditor(Toplevel):
             self.line_number_bar.config(state='disabled')
 
     def _toggle_line_num(self):
-        # TODO 切换行号显示并且重新渲染主界面
+        # TODO 切换行号显示并且重新渲染主界面，若不显示行号则移除行号栏
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
         self._write_config_()
-        if self.config["show_line_num"]:
-            pass
-        else:
-            pass
+        self._update_line_num()
+
+    def _update_hightlight(self):
+        # TODO 将_toggle_hightlight中更新高亮显示的部分放到此处作为调用
         pass
 
     def _toggle_highlight(self):
@@ -456,6 +473,7 @@ class PyEditor(Toplevel):
                 print(result['encoding'])
                 text = byte.decode(encoding=result['encoding'])
                 self.content_text.insert(1.0, text)
+        self._update_line_num()
 
     def save(self, event=None):
         if not self.file_name:
