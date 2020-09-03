@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 #import tkinter.ttk as ttk
 
@@ -127,7 +128,8 @@ class Tooltip:
         # Work arounds for a tkinter 8.6 bug with no title popups
         # See https://github.com/PySimpleGUI/PySimpleGUI/issues/3279#issuecomment-674342042
         if tk.TkVersion == 8.6:
-            self.tw.wm_overrideredirect(False)
+            if sys.platform == "darwin":
+                self.tw.wm_overrideredirect(False)
 
         win = tk.Frame(self.tw,
                        background=bg,

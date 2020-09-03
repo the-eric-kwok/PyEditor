@@ -1,5 +1,4 @@
 import os
-from platform import system
 import json
 import getopt
 import sys
@@ -216,12 +215,14 @@ class PyEditor(Toplevel):
             Tooltip(tool_btn, text=tip)  # 鼠标停留会出现提示信息
             self.icon_res.append(tool_icon)
 
-    def _mark_as_dirty_(self):
-        if self.file_name:
-            self.title("%s* - PyEditor" % self.file_name)
-        else:
-            self.title("New* - PyEditor")
-        self.dirty = True
+    def _mark_as_dirty_(self, event):
+        print(self, "char:"+event.char)
+        if event.char != "" and event.char != "\b":
+            if self.file_name:
+                self.title("%s* - PyEditor" % self.file_name)
+            else:
+                self.title("New* - PyEditor")
+            self.dirty = True
 
     def _mark_as_clean_(self):
         if self.file_name:
@@ -241,7 +242,7 @@ class PyEditor(Toplevel):
             self.line_number_bar.pack(side='left', fill='y')
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(
-            self, wrap='word', undo=True, font=self.custom_font)
+            self, wrap='word', undo=True, font=self.custom_font, exportselection=False)
         self.content_text.pack(expand='yes', fill='both')
         self.content_text.bind(key_binding["new"][0], self.new_file)
         self.content_text.bind(key_binding["new"][1], self.new_file)
@@ -258,9 +259,9 @@ class PyEditor(Toplevel):
         )
         # TODO 使用 <Any-KeyPress> 更新高亮当前行
         self.content_text.bind(
-            '<Any-KeyPress>', lambda e: self._mark_as_dirty_()  # TODO 修改为仅绑定键盘输入，取消绑定鼠标输入
+            '<Key>', lambda e: self._mark_as_dirty_(e)  # TODO 修改为仅绑定键盘输入，取消绑定鼠标输入
         )
-        self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
+        self.bind('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
         # 创建滚动条
         scroll_bar = Scrollbar(self.content_text)
@@ -278,7 +279,7 @@ class PyEditor(Toplevel):
                                    command=self._shortcut_action(it2))
         popup_menu.add_separator()
         popup_menu.add_command(label='全选', command=self.select_all)
-        if system() == "Darwin":
+        if sys.platform == "darwin":
             # macOS 的右键为鼠标第二键
             self.content_text.bind(
                 '<Button-2>', lambda event: popup_menu.tk_popup(event.x_root, event.y_root))
@@ -307,7 +308,7 @@ class PyEditor(Toplevel):
         # TODO 切换行号显示并且重新渲染主界面
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
         self._write_config_()
-        if self.is_show_line_num.get():
+        if self.config["show_line_num"]:
             pass
         else:
             pass
