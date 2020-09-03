@@ -5,15 +5,17 @@ ICONS = ['new_file', 'open_file', 'save', 'cut', 'copy', 'paste',
 TIPS = ['新建文件', '打开文件', '保存文件', '剪切', '复制', '粘贴', '撤销', '重做', '查找']
 
 
-theme_color = {
-    'Default': '#000000.#FFFFFF',
-    'Greygarious': '#83406A.#D1D4D1',
-    'Aquamarine': '#5B8340.#D1E7E0',
-    'Bold Beige': '#4B4620.#FFF0E1',
-    'Cobalt Blue': '#ffffBB.#3333aa',
-    'Olive Green': '#D1E7E0.#5B8340',
-    'Night Mode': '#FFFFFF.#000000',
+theme_color = {  # 行号栏     背景色      前景色
+    'Default': ['#F0E68C', '#000000', '#FFFFFF'],
+    'Greygarious': ['#F0E68C', '#83406A', '#D1D4D1'],
+    'Aquamarine': ['#F0E68C', '#5B8340', '#D1E7E0'],
+    'Bold Beige': ['#F0E68C', '#4B4620', '#FFF0E1'],
+    'Cobalt Blue': ['#F0E68C', '#ffffBB', '#3333aa'],
+    'Olive Green': ['#F0E68C', '#D1E7E0', '#5B8340'],
 }
+
+NOT_DIRTY = ["F1", "F2", "F3", "F4", "F5", "F6", "F7",
+             "F8", "F9", "F10", "F11", "F12", "Escape"]
 
 if system() == "Darwin":
     # If platform is macOS
@@ -21,7 +23,6 @@ if system() == "Darwin":
         "new": "Command+N",
         "open": "Command+O",
         "save": "Command+S",
-        "save_as": "Shift+Command+S",
         "exit": "Command+W",
         "undo": "Command+Z",
         "redo": "Shift+Command+Z",
@@ -32,18 +33,15 @@ if system() == "Darwin":
         "select_all": "Command+A"
     }
     key_binding = {  # TODO: macOS 下按键绑定无效
-        "new": ["<Meta-n>", "<Meta-N>"],
-        "open": ["<Meta-o>", "<Meta-O>"],
-        "save": ["<Meta-s>", "<Meta-S>"],
-        "save_as": ["<Shift-Meta-s>", "<Shift-Meta-S>"],
-        "exit": ["<Meta-w>", "<Meta-W>"],
-        "undo": ["<Meta-z>", "<Meta-Z>"],
-        "redo": ["<Shift-Meta-z>", "<Shift-Meta-Z>"],
-        "cut": ["<Meta-x>", "<Meta-X>"],
-        "copy": ["<Meta-c>", "<Meta-C>"],
-        "paste": ["<Meta-v>", "<Meta-V>"],
-        "find": ["<Meta-f>", "<Meta-F>"],
-        "select_all": ["<Meta-a>", "<Meta-A>"]
+        "new": ["<Meta_L><n>", "<Meta_L><N>"],
+        "open": ["<Meta_L><o>", "<Meta_L><O>"],
+        "save": ["<Meta_L><s>", "<Meta_L><S>"],
+        "exit": ["<Meta_L><w>", "<Meta_L><W>"],
+        "cut": ["<Meta_L><x>", "<Meta_L><X>"],
+        "copy": ["<Meta_L><c>", "<Meta_L><C>"],
+        "paste": ["<Meta_L><v>", "<Meta_L><V>"],
+        "find": ["<Meta_L><f>", "<Meta_L><F>"],
+        "select_all": ["<Meta_L><a>", "<Meta_L><A>"]
     }
 else:
     accelerator = {

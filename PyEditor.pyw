@@ -41,6 +41,7 @@ class PyEditor(Toplevel):
         super().__init__()
         self.parent = parent
         self.custom_font = tkFont.Font(self, family="Helvetica", size=12)
+
         self._parse_argv_(argv)
         self._read_config_()
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
@@ -118,8 +119,12 @@ class PyEditor(Toplevel):
             label='打开', accelerator=accelerator["open"], command=self.open_file)
         file_menu.add_command(
             label='保存', accelerator=accelerator["save"], command=self.save)
-        file_menu.add_command(
-            label='另存为', accelerator=accelerator["save_as"], command=self.save_as)
+        if sys.platform == "win32":
+            file_menu.add_command(
+                label='另存为', accelerator=accelerator["save_as"], command=self.save_as)
+        else:
+            file_menu.add_command(label="另存为", command=self.save_as)
+
         file_menu.add_separator()
         file_menu.add_command(
             label='退出', accelerator=accelerator["exit"], command=self.exit_editor)
@@ -216,8 +221,8 @@ class PyEditor(Toplevel):
             self.icon_res.append(tool_icon)
 
     def _mark_as_dirty_(self, event):
-        print(self, "char:"+event.char)
-        if event.char != "" and event.char != "\b":
+        print(self, "keysym:", event.keysym)
+        if event.char != "" and not event.keysym in NOT_DIRTY:
             if self.file_name:
                 self.title("%s* - PyEditor" % self.file_name)
             else:
@@ -237,31 +242,34 @@ class PyEditor(Toplevel):
         '''
         # 创建行号栏 （takefocus=0 屏蔽焦点）
         if self.config["line_num"]:
-            self.line_number_bar = Text(self, width=4, padx=3, takefocus=0, border=0,
-                                        background='#F0E68C', state='disabled')
+            self.line_number_bar = Text(self, width=3, padx=3, takefocus=0, border=0,
+                                        background="#F0E68C", state='disabled', font=self.custom_font)
             self.line_number_bar.pack(side='left', fill='y')
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(
             self, wrap='word', undo=True, font=self.custom_font, exportselection=False)
         self.content_text.pack(expand='yes', fill='both')
-        self.content_text.bind(key_binding["new"][0], self.new_file)
-        self.content_text.bind(key_binding["new"][1], self.new_file)
-        self.content_text.bind(key_binding["open"][0], self.open_file)
-        self.content_text.bind(key_binding["open"][1], self.open_file)
-        self.content_text.bind(key_binding["save"][0], self.save)
-        self.content_text.bind(key_binding["save"][1], self.save)
-        self.content_text.bind(key_binding["select_all"][0], self.select_all)
-        self.content_text.bind(key_binding["select_all"][1], self.select_all)
-        self.content_text.bind(key_binding["find"][0], self.find_text)
-        self.content_text.bind(key_binding["find"][1], self.find_text)
-        self.content_text.bind(
+        self.bind(key_binding["new"][0], self.new_file)
+        self.bind(key_binding["new"][1], self.new_file)
+        self.bind(key_binding["open"][0], self.open_file)
+        self.bind(key_binding["open"][1], self.open_file)
+        self.bind(key_binding["save"][0], self.save)
+        self.bind(key_binding["save"][1], self.save)
+        self.bind(key_binding["select_all"][0], self.select_all)
+        self.bind(key_binding["select_all"][1], self.select_all)
+        self.bind(key_binding["find"][0], self.find_text)
+        self.bind(key_binding["find"][1], self.find_text)
+        self.bind(
             '<Any-KeyPress>', lambda e: self._update_line_num()
         )
         # TODO 使用 <Any-KeyPress> 更新高亮当前行
+        # 将鼠标左键点击绑定为将焦点赋予content_text
+        self.content_text.bind("<Button-1>", lambda e: self.grab_focus())
         self.content_text.bind(
-            '<Key>', lambda e: self._mark_as_dirty_(e)  # TODO 修改为仅绑定键盘输入，取消绑定鼠标输入
+            # TODO 修改为仅绑定键盘输入，取消绑定鼠标输入
+            '<Key>', lambda e: self._mark_as_dirty_(e)
         )
-        self.bind('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
+        self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
         # 创建滚动条
         scroll_bar = Scrollbar(self.content_text)
@@ -377,10 +385,17 @@ class PyEditor(Toplevel):
         '''
         更改主题
         '''
-        # TODO 更换字体功能
         selected_theme = self.theme_choice.get()
-        fg_bg = theme_color.get(selected_theme)
-        fg_color, bg_color = fg_bg.split('.')
+        try:
+            theme = theme_color[selected_theme]
+        except KeyError:
+            theme = theme_color.get("Default")
+            self.config["theme"] = "Default"
+            self._write_config_()
+        line_num_color = theme[0]
+        self.line_number_bar.config(bg=line_num_color)
+        fg_color = theme[1]
+        bg_color = theme[2]
         self.content_text.config(bg=bg_color, fg=fg_color)
 
     def toggle_font(self):
@@ -539,6 +554,9 @@ class PyEditor(Toplevel):
         else:
             self.destroy()
         self.parent.exit()
+
+    def grab_focus(self):
+        self.content_text.focus_force()
 
 
 def resource_path(relative_path):
