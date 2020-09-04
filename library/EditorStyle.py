@@ -1,4 +1,4 @@
-from platform import system
+from sys import platform
 
 COMMAND = ['new_file', 'open_file', 'save',
            'cut', 'copy', 'paste', 'undo', 'redo', 'find_text']
@@ -17,7 +17,7 @@ theme_color = {  # 行号栏     背景色      前景色
 NOT_DIRTY = ["F1", "F2", "F3", "F4", "F5", "F6", "F7",
              "F8", "F9", "F10", "F11", "F12", "Escape"]
 
-if system() == "Darwin":
+if platform == "darwin":
     # If platform is macOS
     accelerator = {
         "new": "Command+N",

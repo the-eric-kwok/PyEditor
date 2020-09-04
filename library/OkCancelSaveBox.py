@@ -1,34 +1,34 @@
 import tkinter as tk
 
 
-class QuitSaveBox:
+class OkCancelSaveBox:
 
-    def __init__(self, parent):
+    def __init__(self, parent, text):
         top = self.top = tk.Toplevel(parent)
         self.answer = ""
         top.resizable(False, False)
-        lbl = tk.Label(top, text="你确定要退出吗？所有未保存的更改都会丢失")
+        lbl = tk.Label(top, text=text)
         lbl.place(relx=.5, rely=.4, anchor='c')
         top.geometry('300x100')
-        no_button = tk.Button(top, text='返回', command=self.no)
+        no_button = tk.Button(top, text='取消', command=self.onCancel)
         no_button.place(relx=0.85, rely=0.8, anchor='c')
-        save_button = tk.Button(top, text='保存', command=self.save)
+        save_button = tk.Button(top, text='保存', command=self.onSave)
         save_button.place(relx=0.65, rely=0.8, anchor='c')
-        yes_button = tk.Button(top, text='退出', command=self.yes)
+        yes_button = tk.Button(top, text='确定', command=self.onOk)
         yes_button.place(relx=0.15, rely=0.8, anchor='c')
-        top.protocol('WM_DELETE_WINDOW', self.no)
+        top.protocol('WM_DELETE_WINDOW', self.onCancel)
         top.bind('<Return>', (lambda e, b=no_button: b.invoke()))
         top.grab_set()  # 拦截对底下窗口的点击
 
-    def yes(self):
-        self.answer = "<<Exit>>"
+    def onOk(self):
+        self.answer = "<<Ok>>"
         self.top.destroy()
 
-    def no(self):
-        self.answer = "<<Back>>"
+    def onCancel(self):
+        self.answer = "<<Cancel>>"
         self.top.destroy()
 
-    def save(self):
+    def onSave(self):
         self.answer = "<<Save>>"
         self.top.destroy()
 

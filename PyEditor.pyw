@@ -11,9 +11,9 @@ import tkinter.font as tkFont
 import chardet
 
 from library.FontPanel import FontPanel
-from library.editor_style import *
-from library.tooltip import Tooltip
-from library.quitsavebox import QuitSaveBox
+from library.EditorStyle import *
+from library.Tooltip import Tooltip
+from library.OkCancelSaveBox import OkCancelSaveBox
 
 
 class Root(Tk):
@@ -222,16 +222,22 @@ class PyEditor(Toplevel):
             Tooltip(tool_btn, text=tip)  # 鼠标停留会出现提示信息
             self.icon_res.append(tool_icon)
 
-    def _mark_as_dirty_(self, *event):
+    def _sync_title_dirty_(self, *event):
         '''
         修改标题，提示需要保存
 
         实际标记工作交给编辑器控件自动完成
         '''
-        if self.file_name:
-            self.title("%s* - PyEditor" % self.file_name)
+        if self.content_text.edit_modified():
+            if self.file_name:
+                self.title("%s* - PyEditor" % self.file_name)
+            else:
+                self.title("New* - PyEditor")
         else:
-            self.title("New* - PyEditor")
+            if self.file_name:
+                self.title("%s - PyEditor" % self.file_name)
+            else:
+                self.title("New - PyEditor")
 
     def _mark_as_clean_(self):
         '''
@@ -288,7 +294,7 @@ class PyEditor(Toplevel):
         # 将鼠标左键点击绑定为将焦点赋予content_text
         self.content_text.bind("<Button-1>", lambda e: self.grab_focus())
         self.content_text.bind(
-            "<<Modified>>", lambda e: self._mark_as_dirty_(e))
+            "<<Modified>>", lambda e: self._sync_title_dirty_(e))
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
         self.line_number_bar.config(state=NORMAL)
@@ -422,7 +428,7 @@ class PyEditor(Toplevel):
             if type != "copy" and type != "save":
                 self._update_line_num()
                 if type != "new_file" and type != "open_file":
-                    self._mark_as_dirty_()
+                    self._sync_title_dirty_()
         return handle
 
     def toggle_change_theme(self):
@@ -492,23 +498,30 @@ class PyEditor(Toplevel):
 
     def open_file(self, event=None):
         # TODO 若编辑器为脏，则在打开新文件之前询问
-        input_file = filedialog.askopenfilename(
-            filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
-                       ("Python code", "*.py"), ("Python code", "*.pyw")],
-            title="选择一个文件")
-        if input_file:
-            self.file_name = os.path.basename(input_file)
-            self.full_path = input_file
-            self.title("%s - PyEditor" % self.file_name)
-            self.content_text.delete(1.0, END)
-            with open(input_file, 'rb') as _file:
-                self.byte = _file.read()
-                result = chardet.detect(self.byte)
-                text = self.byte.decode(encoding=result['encoding'])
-                self.content_text.insert(1.0, text)
-                self.encoding = result['encoding']
-        self._update_line_num()
-        self._mark_as_clean_()
+        if self.content_text.edit_modified():
+            dialog = OkCancelSaveBox(self, "你确定要打开新文件吗？\n当前文件中所有的修改都将丢失")
+            self.wait_window(dialog.top)
+            if dialog.get() == "<<Ok>>":
+                input_file = filedialog.askopenfilename(
+                    filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
+                               ("Python code", "*.py"), ("Python code", "*.pyw")],
+                    title="选择一个文件")
+                if input_file:
+                    self.file_name = os.path.basename(input_file)
+                    self.full_path = input_file
+                    self.title("%s - PyEditor" % self.file_name)
+                    self.content_text.delete(1.0, END)
+                    with open(input_file, 'rb') as _file:
+                        byte = _file.read()
+                        result = chardet.detect(byte)
+                        text = byte.decode(encoding=result['encoding'])
+                        self.content_text.insert(1.0, text)
+                        self.encoding = result['encoding']
+                self._update_line_num()
+                self._mark_as_clean_()
+
+            elif dialog.get() == "<<Save>>":
+                self.save()
 
     def save(self, event=None):
         if self.full_path is None:
@@ -581,9 +594,9 @@ class PyEditor(Toplevel):
         处理编辑器关闭操作
         '''
         if self.content_text.edit_modified():
-            dialog = QuitSaveBox(self)
+            dialog = OkCancelSaveBox(self, "你确定要退出吗？\n所有未保存的更改都会丢失")
             self.wait_window(dialog.top)
-            if dialog.get() == "<<Exit>>":
+            if dialog.get() == "<<Ok>>":
                 self.destroy()
             elif dialog.get() == "<<Save>>":
                 self.save()
