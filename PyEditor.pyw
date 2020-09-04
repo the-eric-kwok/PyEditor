@@ -41,7 +41,7 @@ class PyEditor(Toplevel):
     def __init__(self, argv, parent):
         super().__init__()
         self.parent = parent
-        self.custom_font = tkFont.Font(self, family="Consola", size=12)
+        self.custom_font = tkFont.Font(self, family='TkFixedFont', size=14)
 
         self._parse_argv_(argv)
         self._read_config_()
@@ -498,30 +498,35 @@ class PyEditor(Toplevel):
 
     def open_file(self, event=None):
         # TODO 若编辑器为脏，则在打开新文件之前询问
+        def __opener__():
+            input_file = filedialog.askopenfilename(
+                filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
+                           ("Python code", "*.py"), ("Python code", "*.pyw")],
+                title="选择一个文件")
+            if input_file:
+                self.file_name = os.path.basename(input_file)
+                self.full_path = input_file
+                self.title("%s - PyEditor" % self.file_name)
+                self.content_text.delete(1.0, END)
+                with open(input_file, 'rb') as _file:
+                    byte = _file.read()
+                    result = chardet.detect(byte)
+                    text = byte.decode(encoding=result['encoding'])
+                    self.content_text.insert(1.0, text)
+                    self.encoding = result['encoding']
+            self._update_line_num()
+            self._mark_as_clean_()
+
         if self.content_text.edit_modified():
             dialog = OkCancelSaveBox(self, "你确定要打开新文件吗？\n当前文件中所有的修改都将丢失")
             self.wait_window(dialog.top)
             if dialog.get() == "<<Ok>>":
-                input_file = filedialog.askopenfilename(
-                    filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
-                               ("Python code", "*.py"), ("Python code", "*.pyw")],
-                    title="选择一个文件")
-                if input_file:
-                    self.file_name = os.path.basename(input_file)
-                    self.full_path = input_file
-                    self.title("%s - PyEditor" % self.file_name)
-                    self.content_text.delete(1.0, END)
-                    with open(input_file, 'rb') as _file:
-                        byte = _file.read()
-                        result = chardet.detect(byte)
-                        text = byte.decode(encoding=result['encoding'])
-                        self.content_text.insert(1.0, text)
-                        self.encoding = result['encoding']
-                self._update_line_num()
-                self._mark_as_clean_()
+                __opener__()
 
             elif dialog.get() == "<<Save>>":
                 self.save()
+        else:
+            __opener__()
 
     def save(self, event=None):
         if self.full_path is None:
@@ -602,6 +607,7 @@ class PyEditor(Toplevel):
                 self.save()
         else:
             self.destroy()
+        # 调用根窗口（不可见）中的exit方法，根据实例个数判断是否需要退出
         self.parent.exit()
 
     def grab_focus(self):

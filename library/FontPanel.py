@@ -11,14 +11,14 @@ class FontPanel:
         self.parent = parent
         top = self.top = tk.Toplevel(parent)
         top.resizable(False, False)
-        #top.geometry("200x300+%d+%d" % (500, 500))
+        #top.geometry("350x350+%d+%d" % (500, 500))
         # 创建一个自定义字体以便等会儿更新示例文本
         self.custom_font = tkFont.Font(
             family=self.font_family, size=self.font_size)
         self.font_list = list(tkFont.families(parent))
 
         # 创建字体选择器区
-        box_frame = tk.Frame(top)
+        box_frame = tk.Frame(top, padx=10)
         box_frame.pack()
         # 字体选择器
         font_selector = tk.Frame(box_frame)
@@ -100,6 +100,7 @@ if __name__ == "__main__":
         root.wait_window(dialog.top)
 
     root = tk.Tk()
+    root.geometry("200x100+600+300")
     button = tk.Button(root, text="ClickMe", command=onClick)
     button.pack()
     root.mainloop()
