@@ -9,7 +9,8 @@
     - 保存
     - 全选
 - [x] 字体更换
-- [ ] 字体更换后记录到config.json中
+- [x] 字体更换后记录到config.json中
+- [ ] 只显示等宽字体的选项
 - [x] FIXME: 更换字体后无法插入文本bug (Only on macOS)
 - [x] FIXME: 按Ctrl等修饰键时会把编辑器标为脏
 - [x] Windows 下另存为热键是否绑定？
@@ -21,5 +22,6 @@
 - [x] FIXME: 点击文本框会跳回首行 (Introduced by @e9b827d)
 - [x] FIXME: 打开文件的时候调用了mark_as_dirty?
 - [ ] Windows下把配置文件放到用户目录
+
 
 

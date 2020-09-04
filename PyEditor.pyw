@@ -41,10 +41,16 @@ class PyEditor(Toplevel):
     def __init__(self, argv, parent):
         super().__init__()
         self.parent = parent
-        self.custom_font = tkFont.Font(self, family='TkFixedFont', size=14)
 
         self._parse_argv_(argv)
         self._read_config_()
+
+        try:
+            self.custom_font = tkFont.Font(
+                self, family=self.config["font_family"], size=self.config["font_size"])
+        except KeyError:
+            self.custom_font = tkFont.Font(self, family='TkFixedFont', size=12)
+
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
         self._create_menu_bar_()
         self._create_shortcut_bar_()
@@ -109,6 +115,8 @@ class PyEditor(Toplevel):
         self.geometry(wm_val)
         self.iconbitmap(resource_path("editor.ico"))
         self.protocol('WM_DELETE_WINDOW', self.close_editor)
+        self.bind(key_binding["close"][0], self.close_editor)
+        self.bind(key_binding["close"][1], self.close_editor)
 
     def _create_file_menu_(self, menu_bar):
         '''
@@ -459,6 +467,9 @@ class PyEditor(Toplevel):
     def toggle_font(self):
         dialog = FontPanel(self)
         self.wait_window(dialog.top)
+        self.config["font_family"] = self.custom_font.cget("family")
+        self.config["font_size"] = self.custom_font.cget("size")
+        self._write_config_()
 
     def handle_menu_action(self, action_type):
         '''
@@ -594,7 +605,7 @@ class PyEditor(Toplevel):
         search_box.focus_set()
         search_toplevel.title('发现%d个匹配的' % matches_found)
 
-    def close_editor(self):
+    def close_editor(self, *e):
         '''
         处理编辑器关闭操作
         '''

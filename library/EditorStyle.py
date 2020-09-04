@@ -32,7 +32,7 @@ if platform == "darwin":
         "find": "Command+F",
         "select_all": "Command+A"
     }
-    key_binding = {  # TODO: macOS 下按键绑定无效
+    key_binding = {
         "new": ["<Meta_L><n>", "<Meta_L><N>"],
         "open": ["<Meta_L><o>", "<Meta_L><O>"],
         "save": ["<Meta_L><s>", "<Meta_L><S>"],
@@ -41,7 +41,8 @@ if platform == "darwin":
         "copy": ["<Meta_L><c>", "<Meta_L><C>"],
         "paste": ["<Meta_L><v>", "<Meta_L><V>"],
         "find": ["<Meta_L><f>", "<Meta_L><F>"],
-        "select_all": ["<Meta_L><a>", "<Meta_L><A>"]
+        "select_all": ["<Meta_L><a>", "<Meta_L><A>"],
+        "close": ["<Meta_L><w>", "<Meta_L><W>"]
     }
 else:
     accelerator = {
@@ -49,7 +50,7 @@ else:
         "open": "Ctrl+O",
         "save": "Ctrl+S",
         "save_as": "Shift+Ctrl+S",
-        "exit": "Alt+F4",
+        "exit": "Ctrl+W",
         "undo": "Ctrl+Z",
         "redo": "Shift+Y",
         "cut": "Ctrl+X",
@@ -70,5 +71,6 @@ else:
         "copy": ["<Control-c>", "<Control-C>"],
         "paste": ["<Control-v>", "<Control-V>"],
         "find": ["<Control-f>", "<Control-F>"],
-        "select_all": ["<Control-a>", "<Control-A>"]
+        "select_all": ["<Control-a>", "<Control-A>"],
+        "close": ["<Control-w>", "<Control-W>"]
     }
