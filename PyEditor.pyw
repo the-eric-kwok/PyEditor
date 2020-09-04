@@ -27,7 +27,7 @@ class Root(Tk):
 class PyEditor(Toplevel):
     icon_res = []
     file_name = None
-    dirty = False  # 标记文件是否修改过，默认为未修改，可直接关闭，不用提示保存
+    full_path = None
     config = {
         "line_num": True,
         "highlight": True,
@@ -36,11 +36,12 @@ class PyEditor(Toplevel):
     config_file = os.path.join(os.path.curdir, ".config.json")
     pos_x = 0
     pos_y = 0
+    encoding = "utf-8"
 
     def __init__(self, argv, parent):
         super().__init__()
         self.parent = parent
-        self.custom_font = tkFont.Font(self, family="Helvetica", size=12)
+        self.custom_font = tkFont.Font(self, family="Consola", size=12)
 
         self._parse_argv_(argv)
         self._read_config_()
@@ -50,6 +51,7 @@ class PyEditor(Toplevel):
         self._create_body_()
         self._create_right_popup_menu()
         self.change_theme()
+        self._update_line_num()
 
     def destroy(self):
         apps.remove(self)
@@ -127,7 +129,7 @@ class PyEditor(Toplevel):
 
         file_menu.add_separator()
         file_menu.add_command(
-            label='退出', accelerator=accelerator["exit"], command=self.exit_editor)
+            label='退出', accelerator=accelerator["exit"], command=self.close_editor)
         return file_menu
 
     def _create_edit_menu_(self, menu_bar):
@@ -212,36 +214,41 @@ class PyEditor(Toplevel):
         shortcut_bar = Frame(self, height=25, background='#ECECEC')
         shortcut_bar.pack(fill='x')
 
-        for icon, tip in zip(ICONS, TIPS):
-            tool_icon = PhotoImage(file=resource_path('%s.gif' % icon))
+        for comm, tip in zip(COMMAND, CH_COMM):
+            tool_icon = PhotoImage(file=resource_path('%s.gif' % comm))
             tool_btn = Button(shortcut_bar, image=tool_icon,
-                              command=self._shortcut_action(icon))
+                              command=self._shortcut_action(comm))
             tool_btn.pack(side='left')
             Tooltip(tool_btn, text=tip)  # 鼠标停留会出现提示信息
             self.icon_res.append(tool_icon)
 
-    def _mark_as_dirty_(self, event):
-        print(self, "keysym:", event.keysym)
-        if event.char != "" and not event.keysym in NOT_DIRTY:
-            if self.file_name:
-                self.title("%s* - PyEditor" % self.file_name)
-            else:
-                self.title("New* - PyEditor")
-            self.dirty = True
+    def _mark_as_dirty_(self, *event):
+        '''
+        修改标题，提示需要保存
+
+        实际标记工作交给编辑器控件自动完成
+        '''
+        if self.file_name:
+            self.title("%s* - PyEditor" % self.file_name)
+        else:
+            self.title("New* - PyEditor")
 
     def _mark_as_clean_(self):
+        '''
+        修改标题，提示文件未经编辑
+
+        调用Text.edit_modified(False)来标记编辑器为未经编辑
+        '''
         if self.file_name:
             self.title("%s - PyEditor" % self.file_name)
         else:
             self.title("New - PyEditor")
-        self.dirty = False
+        self.content_text.edit_modified(False)
 
     def _create_body_(self):
         '''
         创建程序主体
         '''
-        style = Style(self)
-        style.configure('Text', rowheight=40)  # SOLUTION
 
         # TODO 将文本框和行号栏的行高设为一致的，以解决长文本行号错位的问题
         # 创建文本输入框(undo=True启用撤销机制)
@@ -249,7 +256,7 @@ class PyEditor(Toplevel):
             self, wrap='word', undo=True, font=self.custom_font, exportselection=False)
         # 创建行号栏 （takefocus=0 屏蔽焦点）
         self.line_number_bar = Text(self, width=3, padx=3, takefocus=0, border=0,
-                                    background="#F0E68C", state='disabled', font=self.custom_font)
+                                    background="#F0E68C", state=DISABLED, font=self.custom_font)
         # 创建滚动条
         self.scroll_bar = Scrollbar(self.content_text)
         self.scroll_bar["command"] = self.__on_scrollbar__
@@ -281,17 +288,20 @@ class PyEditor(Toplevel):
         # 将鼠标左键点击绑定为将焦点赋予content_text
         self.content_text.bind("<Button-1>", lambda e: self.grab_focus())
         self.content_text.bind(
-            # TODO 修改为仅绑定键盘输入，取消绑定鼠标输入
-            '<Key>', lambda e: self._mark_as_dirty_(e)
-        )
+            "<<Modified>>", lambda e: self._mark_as_dirty_(e))
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
+        self.line_number_bar.config(state=NORMAL)
+        self.line_number_bar.insert(1.0, "1")
+        self.line_number_bar.config(state=DISABLED)
 
     def __on_scrollbar__(self, *args):
+        # 使文本框和行号栏同步滚动的方法
         self.content_text.yview(*args)
         self.line_number_bar.yview(*args)
 
     def __on_textscroll__(self, *args):
+        # 使文本框和行号栏同步滚动的方法
         self.scroll_bar.set(*args)
         self.__on_scrollbar__("moveto", args[0])
 
@@ -300,7 +310,7 @@ class PyEditor(Toplevel):
         鼠标右键弹出菜单
         '''
         popup_menu = Menu(self.content_text, tearoff=0)
-        for it1, it2 in zip(TIPS[3:8], ICONS[3:8]):
+        for it1, it2 in zip(CH_COMM[3:8], COMMAND[3:8]):
             popup_menu.add_command(label=it1, compound='left',
                                    command=self._shortcut_action(it2))
         popup_menu.add_separator()
@@ -317,23 +327,47 @@ class PyEditor(Toplevel):
         '''
         更新行号
         '''
-        if self.is_show_line_num.get():
-            row, col = self.content_text.index("end").split('.')
-            line_num_content = "\n".join([str(i) for i in range(1, int(row))])
-            self.line_number_bar.config(state='normal')
-            self.line_number_bar.delete('1.0', 'end')
-            self.line_number_bar.insert('1.0', line_num_content)
-            self.line_number_bar.config(state='disabled')
+        # 先获取原文，和 line_num_content 的长度做对比，如果长则相减并追加，短则相减并删除
+        row, col = self.content_text.index("end").split('.')
+        line_num_content = ""
+        for i in range(1, int(row)):
+            line_num_content += ('\n' + str(i))
+        origin = self.line_number_bar.get(1.0, END)
+        diff = len(line_num_content) - len(origin)
+        if diff > 0:
+            # Append
+            self.line_number_bar.config(state=NORMAL)
+            self.line_number_bar.insert(END, line_num_content[-diff:])
+            self.line_number_bar.config(state=DISABLED)
+
+        elif diff < 0:
+            # Substract
+            self.line_number_bar.config(state=NORMAL)
+            delete = "%s%dc" % (INSERT, diff)
+            self.line_number_bar.delete("%s%dc" % (INSERT, diff), END)
+            delete = self.line_number_bar.get(1.0, END)
+            self.line_number_bar.config(state=DISABLED)
+
         else:
-            self.line_number_bar.config(state='normal')
-            self.line_number_bar.delete('1.0', 'end')
-            self.line_number_bar.config(state='disabled')
+            # Do nothing
+            pass
 
     def _toggle_line_num(self):
-        # TODO 切换行号显示并且重新渲染主界面，若不显示行号则移除行号栏
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
         self._write_config_()
-        self._update_line_num()
+        if self.config["show_line_num"]:
+            self._update_line_num()
+            try:
+                # 尝试获取pack信息，获取失败就意味着还没有pack过
+                self.line_number_bar.pack_info()
+            except TclError as e:
+                if "isn't packed" in str(e):
+                    self.line_number_bar.pack(side='right')
+        else:
+            try:
+                self.line_number_bar.pack_forget()
+            except TclError:
+                pass
 
     def _update_hightlight(self):
         # TODO 将_toggle_hightlight中更新高亮显示的部分放到此处作为调用
@@ -353,8 +387,9 @@ class PyEditor(Toplevel):
     def _write_to_file(self, file_name):
         try:
             content = self.content_text.get(1.0, 'end')
-            with open(file_name, 'w') as the_file:
-                the_file.write(content)
+            b_content = content.encode(self.encoding)
+            with open(file_name, 'wb') as f:
+                f.write(b_content)
             self.file_name = os.path.basename(file_name)
             self.title("%s - PyEditor" % self.file_name)
         except IOError:
@@ -458,28 +493,28 @@ class PyEditor(Toplevel):
     def open_file(self, event=None):
         # TODO 若编辑器为脏，则在打开新文件之前询问
         input_file = filedialog.askopenfilename(
-            filetypes=[("Text file", "*.txt"), ("Markdown", "*.md"),
-                       ("Python code", "*.py"), ("Python code", "*.pyw"),
-                       ("All", "*.*")],
+            filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
+                       ("Python code", "*.py"), ("Python code", "*.pyw")],
             title="选择一个文件")
         if input_file:
             self.file_name = os.path.basename(input_file)
+            self.full_path = input_file
             self.title("%s - PyEditor" % self.file_name)
-            self.file_name = input_file
             self.content_text.delete(1.0, END)
             with open(input_file, 'rb') as _file:
-                byte = _file.read()
-                result = chardet.detect(byte)
-                print(result['encoding'])
-                text = byte.decode(encoding=result['encoding'])
+                self.byte = _file.read()
+                result = chardet.detect(self.byte)
+                text = self.byte.decode(encoding=result['encoding'])
                 self.content_text.insert(1.0, text)
+                self.encoding = result['encoding']
         self._update_line_num()
+        self._mark_as_clean_()
 
     def save(self, event=None):
-        if not self.file_name:
+        if self.full_path is None:
             self.save_as()
         else:
-            self._write_to_file(self.file_name)
+            self._write_to_file(self.full_path)
             self._mark_as_clean_()
 
     def save_as(self, event=None):
@@ -487,8 +522,9 @@ class PyEditor(Toplevel):
             filetypes=[("All Files", "*.*"), ("文本文档", "*.txt")]
         )
         if input_file:
-            self.file_name = input_file
-            self._write_to_file(self.file_name)
+            self.file_name = os.path.basename(input_file)
+            self.full_path = input_file
+            self._write_to_file(self.full_path)
             self._mark_as_clean_()
 
     def find_text(self, event=None):
@@ -540,29 +576,11 @@ class PyEditor(Toplevel):
         search_box.focus_set()
         search_toplevel.title('发现%d个匹配的' % matches_found)
 
-    def exit_editor(self):
-        '''
-        处理编辑器退出操作
-        '''
-        _dirty = False
-        for app in apps:
-            if _dirty or app.dirty:
-                _dirty = True
-        if _dirty:
-            dialog = QuitSaveBox(self)
-            self.wait_window(dialog.top)
-            if dialog.get() == "<<Exit>>":
-                self.quit()
-            elif dialog.get() == "<<Save>>":
-                self.save()
-        else:
-            self.quit()
-
     def close_editor(self):
         '''
         处理编辑器关闭操作
         '''
-        if self.dirty:
+        if self.content_text.edit_modified():
             dialog = QuitSaveBox(self)
             self.wait_window(dialog.top)
             if dialog.get() == "<<Exit>>":
@@ -574,6 +592,11 @@ class PyEditor(Toplevel):
         self.parent.exit()
 
     def grab_focus(self):
+        '''
+        强制将焦点指向文本框
+
+        此方法被绑定到编辑器控件的鼠标左键单击事件
+        '''
         self.content_text.focus_force()
 
 

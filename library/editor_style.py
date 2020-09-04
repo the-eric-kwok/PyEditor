@@ -1,8 +1,8 @@
 from platform import system
 
-ICONS = ['new_file', 'open_file', 'save', 'cut', 'copy', 'paste',
-         'undo', 'redo', 'find_text']
-TIPS = ['新建文件', '打开文件', '保存文件', '剪切', '复制', '粘贴', '撤销', '重做', '查找']
+COMMAND = ['new_file', 'open_file', 'save',
+           'cut', 'copy', 'paste', 'undo', 'redo', 'find_text']
+CH_COMM = ['新建文件', '打开文件', '保存文件', '剪切', '复制', '粘贴', '撤销', '重做', '查找']
 
 
 theme_color = {  # 行号栏     背景色      前景色

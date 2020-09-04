@@ -12,10 +12,12 @@
 - [ ] 字体更换后记录到config.json中
 - [x] FIXME: 更换字体后无法插入文本bug (Only on macOS)
 - [x] FIXME: 按Ctrl等修饰键时会把编辑器标为脏
-- [ ] Windows 下另存为热键是否绑定？
+- [x] Windows 下另存为热键是否绑定？
 - [ ] 高亮当前行的配置读取与保存
 - [ ] 当文本框获得焦点时绘制当前行的高亮
 - [x] FIXME: 滚动时行号不变大
 - [x] FIXME: 字体放大时行号不变化
 - [ ] FIXME: 将文本编辑器和行号栏都配置成同一个行高（行号错位bug）
-- [ ] FIXME: 点击文本框会跳回首行 (Introduced by @e9b827d)
+- [x] FIXME: 点击文本框会跳回首行 (Introduced by @e9b827d)
+- [ ] FIXME: 打开文件的时候文件被误标记为修改过
+
