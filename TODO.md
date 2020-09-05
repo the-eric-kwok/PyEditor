@@ -22,7 +22,7 @@
 - [x] FIXME: 打开文件的时候调用了mark_as_dirty?
 - [x] PyInstaller Standalone 则把配置文件放到用户目录
 - [x] 高亮显示下选择文本的颜色不清楚
-- [x] 把_update_highlight_绑定到Button1
+- [x] 把`_update_highlight_`绑定到Button1
 - [ ] 从参数中打开文件
 - [x] 自动换行选项
 - [ ] 只显示等宽字体的选项
