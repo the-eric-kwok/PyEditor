@@ -57,6 +57,7 @@ class PyEditor(Toplevel):
         self._create_body_()
         self._create_right_popup_menu()
         self.change_theme()
+        self.toggle_highlight()
         self._update_line_num()
 
     def destroy(self):
@@ -172,11 +173,11 @@ class PyEditor(Toplevel):
         self.is_show_line_num = IntVar()
         self.is_show_line_num.set(int(self.config["line_num"]))
         view_menu.add_checkbutton(
-            label='显示行号', variable=self.is_show_line_num, command=self._toggle_line_num)
+            label='显示行号', variable=self.is_show_line_num, command=self.toggle_line_num)
         self.is_highlight_line = IntVar()
         self.is_highlight_line.set(int(self.config["highlight"]))
         view_menu.add_checkbutton(
-            label='高亮当前行', variable=self.is_highlight_line, command=self._toggle_highlight)
+            label='高亮当前行', variable=self.is_highlight_line, command=self.toggle_highlight)
         view_menu.add_command(
             label='字体设置', command=self.toggle_font)
         # 在主题菜单中再添加一个子菜单列表
@@ -366,7 +367,7 @@ class PyEditor(Toplevel):
             # Do nothing
             pass
 
-    def _toggle_line_num(self):
+    def toggle_line_num(self):
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
         self._write_config_()
         if self.config["show_line_num"]:
@@ -383,18 +384,14 @@ class PyEditor(Toplevel):
             except TclError:
                 pass
 
-    def _update_hightlight(self):
-        # TODO 将_toggle_hightlight中更新高亮显示的部分放到此处作为调用
-        pass
-
-    def _toggle_highlight(self):
+    def toggle_highlight(self):
         self.config["highlight"] = bool(self.is_highlight_line.get())
         self._write_config_()
         if self.is_highlight_line.get():
             self.content_text.tag_remove("active_line", 1.0, "end")
             self.content_text.tag_add(
                 "active_line", "insert linestart", "insert lineend+1c")
-            self.content_text.after(200, self._toggle_highlight)
+            self.content_text.after(200, self.toggle_highlight)
         else:
             self.content_text.tag_remove("active_line", 1.0, "end")
 
