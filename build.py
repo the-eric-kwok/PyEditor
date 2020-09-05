@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from fileinput import filename
 import os
 from sys import platform
 
@@ -16,50 +17,17 @@ if __name__ == "__main__":
             string = string.replace(
                 "org.pythonmac.unspecified", "space.erickwok")
             f.write(string)
+
     elif platform == "win32":
-        import pyinstaller.__main__ as PyInst
-        version_file = '''
-VSVersionInfo(
-  ffi=FixedFileInfo(
-    filevers=(6, 1, 7601, 17514),
-    prodvers=(6, 1, 7601, 17514),
-    mask=0x3f,
-    flags=0x0,
-    OS=0x40004,
-    fileType=0x1,
-    subtype=0x0,
-    date=(0, 0)
-    ),
-  kids=[
-    StringFileInfo(
-      [
-      StringTable(
-        u'040904B0',
-        [StringStruct(u'CompanyName', u'Eric Kwok'),
-        StringStruct(u'FileDescription', u'A simple python editor.'),
-        StringStruct(u'FileVersion', u'%s'),
-        StringStruct(u'InternalName', u'PyEditor'),
-        StringStruct(u'LegalCopyright', u'Eric Kwok. All rights reserved.'),
-        StringStruct(u'OriginalFilename', u'PyEditor.Exe'),
-        StringStruct(u'ProductName', u'PyEditor'),
-        StringStruct(u'ProductVersion', u'%s')])
-      ]), 
-    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
-  ]
-)
-        ''' % version
+        import PyInstaller.__main__ as PyInst
 
-        with open(".\.version_file", "w") as f:
-            f.write(version_file)
+        command = 'pyinstaller -w --icon="Icon.ico" '
+        for (dirpath, dirnames, filenames) in os.walk("img"):
+            for file in filenames:
+                command += '--add-binary="img\%s;img" ' % file
+        command += 'PyEditor.pyw'
+        os.system(command)
 
-        PyInst.run([
-            '--name=%s' % "PyEditor",
-            '--onefile',
-            '--windowed',
-            '--add-binary=%s;img' % os.path.join('img', '*.gif'),
-            '--icon=%s' % os.path.join('.\Icon.ico'),
-            os.path.join('my_package', '__main__.py'),
-        ])
     else:
         print("""
         Platform not implemented! Please run
