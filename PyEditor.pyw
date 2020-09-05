@@ -64,7 +64,7 @@ class PyEditor(Toplevel):
         self._create_body_()
         self._create_right_popup_menu()
         self.change_theme()
-        self.toggle_highlight()
+        self._update_highlight()
         self._update_line_num()
 
     def destroy(self):
@@ -300,12 +300,17 @@ class PyEditor(Toplevel):
         self.bind(key_binding["find"][0], self.find_text)
         self.bind(key_binding["find"][1], self.find_text)
 
-        self.bind('<Key>', lambda e: self._update_line_num("<Key>"))
-        self.bind("<Button-1>", lambda e: self._update_line_num("<Button-1>"))
+        self.bind('<Key>', self._update_line_num)
+        self.bind("<Button-1>", self._update_line_num)
+        self.bind("<ButtonRelease-1>", self._update_highlight)
         self.scroll_bar.bind(
-            "<Button-1>", lambda e: self._update_line_num("<ScrollPress>"))
+            "<Button-1>", self._update_line_num)
+        # self.scroll_bar.bind(
+        #    "<ButtonRelease-1>", self._update_line_num)
         self.content_text.bind(
-            "<MouseWheel>", lambda e: self._update_line_num("<MouseWheel>"))
+            "<MouseWheel>", self._update_line_num)
+        self.content_text.bind('<Key>', self._update_highlight)
+        self.bind('<Button-1>', self._update_highlight)
         # 将鼠标左键点击绑定为将焦点赋予content_text
         self.content_text.bind("<Button-1>", lambda e: self.grab_focus())
         self.content_text.bind(
@@ -331,21 +336,13 @@ class PyEditor(Toplevel):
             self.content_text.bind(
                 '<Button-3>', lambda event: popup_menu.tk_popup(event.x_root, event.y_root))
 
-    def _update_line_num(self, command="<Redraw>"):
+    def _update_line_num(self, event=None):
         '''
         更新行号
-
-        Args:
-
-            command: "<Key>"|"<Redraw>"|"<Click>"|"<ScrollPress>"|"<MouseWheel>"
-
         '''
 
         def onScrollPress(self, *args):
             self.scroll_bar.bind("<B1-Motion>", self.line_number_bar.redraw)
-
-        def onScrollRelease(self, *args):
-            self.scroll_bar.unbind("<B1-Motion>", self.line_number_bar.redraw)
 
         def onPressDelay(self, *args):
             self.after(2, self.line_number_bar.redraw)
@@ -353,16 +350,15 @@ class PyEditor(Toplevel):
         def redraw(self):
             self.line_number_bar.redraw()
 
-        if command == "<Key>":
-            onPressDelay(self)
-        elif command == "<Redraw>":
+        if event == None:
             redraw(self)
-        elif command == "<Click>":
-            redraw(self)
-        elif command == "<ScrollPress>":
-            onScrollPress(self)
-        elif command == "<MouseWheel>":
-            onPressDelay(self)
+        else:
+            if str(event.type) == "KeyPress":
+                onPressDelay(self)
+            elif str(event.type) == "ButtonPress":
+                onScrollPress(self)
+            elif str(event.type) == "MouseWheel":
+                onPressDelay(self)
 
     def toggle_line_num(self):
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
@@ -381,16 +377,32 @@ class PyEditor(Toplevel):
             except TclError:
                 pass
 
-    def toggle_highlight(self):
+    def toggle_highlight(self, event=None):
         self.config["highlight"] = bool(self.is_highlight_line.get())
         self._write_config_()
-        if self.is_highlight_line.get():
-            self.content_text.tag_remove("active_line", 1.0, "end")
-            self.content_text.tag_add(
-                "active_line", "insert linestart", "insert lineend+1c")
-            self.content_text.after(200, self.toggle_highlight)
+        self._update_highlight()
+
+    def _update_highlight(self, event=None):
+        def __update_highlight__(self):
+            if self.is_highlight_line.get():
+                self.content_text.tag_remove("active_line", 1.0, "end")
+                self.content_text.tag_add(
+                    "active_line", "insert linestart", "insert lineend+1c")
+                self.content_text.tag_raise("sel")
+            else:
+                self.content_text.tag_remove("active_line", 1.0, "end")
+
+        if event == None:
+            __update_highlight__(self)
         else:
-            self.content_text.tag_remove("active_line", 1.0, "end")
+            if str(event.type) == "KeyPress":
+                self.after(5, self._update_highlight)
+            elif str(event.type) == "ButtonPress":
+                __update_highlight__(self)
+                self.content_text.bind(
+                    "<B1-Motion>", lambda e: __update_highlight__(self))
+            else:
+                __update_highlight__(self)
 
     def _write_to_file(self, file_name):
         try:
@@ -599,7 +611,7 @@ class PyEditor(Toplevel):
         search_box.focus_set()
         search_toplevel.title('发现%d个匹配的' % matches_found)
 
-    def close_editor(self, *e):
+    def close_editor(self, event=None):
         '''
         处理编辑器关闭操作
         '''

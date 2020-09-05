@@ -52,7 +52,7 @@ else:
         "save_as": "Shift+Ctrl+S",
         "exit": "Ctrl+W",
         "undo": "Ctrl+Z",
-        "redo": "Shift+Y",
+        "redo": "Ctrl+Y",
         "cut": "Ctrl+X",
         "copy": "Ctrl+C",
         "paste": "Ctrl+V",
