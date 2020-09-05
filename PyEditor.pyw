@@ -14,6 +14,7 @@ from library.FontPanel import FontPanel
 from library.EditorStyle import *
 from library.Tooltip import Tooltip
 from library.OkCancelSaveBox import OkCancelSaveBox
+from library.TextLineNumber import TextLineNumbers
 
 
 class Root(Tk):
@@ -264,22 +265,18 @@ class PyEditor(Toplevel):
         '''
         创建程序主体
         '''
-
-        # TODO 将文本框和行号栏的行高设为一致的，以解决长文本行号错位的问题
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(
             self, wrap='word', undo=True, font=self.custom_font, exportselection=False)
-        # 创建行号栏 （takefocus=0 屏蔽焦点）
-        self.line_number_bar = Text(self, width=3, padx=3, takefocus=0, border=0,
-                                    background="#F0E68C", state=DISABLED, font=self.custom_font)
+        # 创建行号栏
+        self.line_number_bar = TextLineNumbers(self, width=30)
+        self.line_number_bar.attach(self.content_text)
         # 创建滚动条
         self.scroll_bar = Scrollbar(self.content_text)
-        self.scroll_bar["command"] = self.__on_scrollbar__
-        self.content_text["yscrollcommand"] = self.__on_textscroll__
-        self.line_number_bar["yscrollcommand"] = self.__on_textscroll__
+        self.scroll_bar["command"] = self.content_text.yview
+        self.content_text["yscrollcommand"] = self.scroll_bar.set
         self.scroll_bar.pack(side='right', fill='y')
         self.content_text.pack(side='right', expand='yes', fill='both')
-
         self.line_number_bar.pack(side='right', fill='y')
 
         # Binding part
@@ -296,29 +293,19 @@ class PyEditor(Toplevel):
         self.bind(key_binding["select_all"][1], self.select_all)
         self.bind(key_binding["find"][0], self.find_text)
         self.bind(key_binding["find"][1], self.find_text)
-        self.bind('<Any-KeyPress>', lambda e: self._update_line_num())
-        self.bind("<Button-1>", lambda e: self._update_line_num())
-        # TODO 使用 <Any-KeyPress> 更新高亮当前行
 
+        self.bind('<Key>', lambda e: self._update_line_num("<Key>"))
+        self.bind("<Button-1>", lambda e: self._update_line_num("<Button-1>"))
+        self.scroll_bar.bind(
+            "<Button-1>", lambda e: self._update_line_num("<ScrollPress>"))
+        self.content_text.bind(
+            "<MouseWheel>", lambda e: self._update_line_num("<MouseWheel>"))
         # 将鼠标左键点击绑定为将焦点赋予content_text
         self.content_text.bind("<Button-1>", lambda e: self.grab_focus())
         self.content_text.bind(
             "<<Modified>>", lambda e: self._sync_title_dirty_(e))
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
-        self.line_number_bar.config(state=NORMAL)
-        self.line_number_bar.insert(1.0, "1")
-        self.line_number_bar.config(state=DISABLED)
-
-    def __on_scrollbar__(self, *args):
-        # 使文本框和行号栏同步滚动的方法
-        self.content_text.yview(*args)
-        self.line_number_bar.yview(*args)
-
-    def __on_textscroll__(self, *args):
-        # 使文本框和行号栏同步滚动的方法
-        self.scroll_bar.set(*args)
-        self.__on_scrollbar__("moveto", args[0])
 
     def _create_right_popup_menu(self):
         '''
@@ -338,34 +325,38 @@ class PyEditor(Toplevel):
             self.content_text.bind(
                 '<Button-3>', lambda event: popup_menu.tk_popup(event.x_root, event.y_root))
 
-    def _update_line_num(self):
+    def _update_line_num(self, command="<Redraw>"):
         '''
         更新行号
+
+        Args:
+
+            command: "<Key>"|"<Redraw>"|"<Click>"|"<ScrollPress>"|"<MouseWheel>"
+
         '''
-        # 先获取原文，和 line_num_content 的长度做对比，如果长则相减并追加，短则相减并删除
-        row, col = self.content_text.index("end").split('.')
-        line_num_content = ""
-        for i in range(1, int(row)):
-            line_num_content += ('\n' + str(i))
-        origin = self.line_number_bar.get(1.0, END)
-        diff = len(line_num_content) - len(origin)
-        if diff > 0:
-            # Append
-            self.line_number_bar.config(state=NORMAL)
-            self.line_number_bar.insert(END, line_num_content[-diff:])
-            self.line_number_bar.config(state=DISABLED)
 
-        elif diff < 0:
-            # Substract
-            self.line_number_bar.config(state=NORMAL)
-            delete = "%s%dc" % (INSERT, diff)
-            self.line_number_bar.delete("%s%dc" % (INSERT, diff), END)
-            delete = self.line_number_bar.get(1.0, END)
-            self.line_number_bar.config(state=DISABLED)
+        def onScrollPress(self, *args):
+            self.scroll_bar.bind("<B1-Motion>", self.line_number_bar.redraw)
 
-        else:
-            # Do nothing
-            pass
+        def onScrollRelease(self, *args):
+            self.scroll_bar.unbind("<B1-Motion>", self.line_number_bar.redraw)
+
+        def onPressDelay(self, *args):
+            self.after(2, self.line_number_bar.redraw)
+
+        def redraw(self):
+            self.line_number_bar.redraw()
+
+        if command == "<Key>":
+            onPressDelay(self)
+        elif command == "<Redraw>":
+            redraw(self)
+        elif command == "<Click>":
+            redraw(self)
+        elif command == "<ScrollPress>":
+            onScrollPress(self)
+        elif command == "<MouseWheel>":
+            onPressDelay(self)
 
     def toggle_line_num(self):
         self.config["show_line_num"] = bool(self.is_show_line_num.get())
@@ -467,6 +458,7 @@ class PyEditor(Toplevel):
         self.config["font_family"] = self.custom_font.cget("family")
         self.config["font_size"] = self.custom_font.cget("size")
         self._write_config_()
+        self._update_line_num()
 
     def handle_menu_action(self, action_type):
         '''
@@ -505,7 +497,6 @@ class PyEditor(Toplevel):
         apps.append(new)
 
     def open_file(self, event=None):
-        # TODO 若编辑器为脏，则在打开新文件之前询问
         def __opener__():
             input_file = filedialog.askopenfilename(
                 filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
