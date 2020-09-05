@@ -10,7 +10,6 @@
     - 全选
 - [x] 字体更换
 - [x] 字体更换后记录到config.json中
-- [ ] 只显示等宽字体的选项
 - [x] FIXME: 更换字体后无法插入文本bug (Only on macOS)
 - [x] FIXME: 按Ctrl等修饰键时会把编辑器标为脏
 - [x] Windows 下另存为热键是否绑定？
@@ -21,7 +20,11 @@
 - [x] FIXME: 将文本编辑器和行号栏都配置成同一个行高（行号错位bug）
 - [x] FIXME: 点击文本框会跳回首行 (Introduced by @e9b827d)
 - [x] FIXME: 打开文件的时候调用了mark_as_dirty?
-- [ ] Windows下把配置文件放到用户目录
+- [x] PyInstaller Standalone 则把配置文件放到用户目录
+- [ ] 高亮显示下选择文本的颜色不清楚
+- [ ] 从参数中打开文件
 - [ ] 自动换行选项
+- [ ] 只显示等宽字体的选项
+
 
 

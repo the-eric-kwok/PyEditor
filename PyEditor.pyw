@@ -1,7 +1,7 @@
 import os
 import json
 import getopt
-import sys
+from sys import platform
 
 from tkinter import *
 from tkinter import filedialog, messagebox
@@ -32,9 +32,15 @@ class PyEditor(Toplevel):
     config = {
         "line_num": True,
         "highlight": True,
-        "theme": "Default"
+        "theme": "Default",
+        "font_family": "TkFixedFont",
+        "font_size": 12
     }
-    config_file = os.path.join(os.path.curdir, ".config.json")
+    if getattr(sys, 'frozen', True):
+        # 如果是通过PyInstaller打包的绿色版本则将配置文件放到用户家目录
+        config_file = os.path.join(os.path.expanduser("~"), ".PyEditor.json")
+    else:
+        config_file = os.path.join(os.path.curdir, ".PyEditor.json")
     pos_x = 0
     pos_y = 0
     encoding = "utf-8"
@@ -131,7 +137,7 @@ class PyEditor(Toplevel):
             label='打开', accelerator=accelerator["open"], command=self.open_file)
         file_menu.add_command(
             label='保存', accelerator=accelerator["save"], command=self.save)
-        if sys.platform == "win32":
+        if platform == "win32":
             file_menu.add_command(
                 label='另存为', accelerator=accelerator["save_as"], command=self.save_as)
         else:
@@ -286,7 +292,7 @@ class PyEditor(Toplevel):
         self.bind(key_binding["open"][1], self.open_file)
         self.bind(key_binding["save"][0], self.save)
         self.bind(key_binding["save"][1], self.save)
-        if sys.platform == "win32":
+        if platform == "win32":
             self.bind(key_binding["save_as"][0], self.save_as)
             self.bind(key_binding["save_as"][1], self.save_as)
         self.bind(key_binding["select_all"][0], self.select_all)
@@ -317,7 +323,7 @@ class PyEditor(Toplevel):
                                    command=self._shortcut_action(it2))
         popup_menu.add_separator()
         popup_menu.add_command(label='全选', command=self.select_all)
-        if sys.platform == "darwin":
+        if platform == "darwin":
             # macOS 的右键为鼠标第二键
             self.content_text.bind(
                 '<Button-2>', lambda event: popup_menu.tk_popup(event.x_root, event.y_root))
