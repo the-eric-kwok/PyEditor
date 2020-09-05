@@ -5,7 +5,7 @@ from sys import platform
 
 from tkinter import *
 from tkinter import filedialog, messagebox
-from tkinter.ttk import Scrollbar, Checkbutton, Label, Button, Style
+from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
 import tkinter.font as tkFont
 
 import chardet
@@ -34,7 +34,8 @@ class PyEditor(Toplevel):
         "highlight": True,
         "theme": "Default",
         "font_family": "TkFixedFont",
-        "font_size": 12
+        "font_size": 12,
+        "wrap": False
     }
     if getattr(sys, 'frozen', True):
         # 如果是通过PyInstaller打包的绿色版本则将配置文件放到用户家目录
@@ -66,6 +67,7 @@ class PyEditor(Toplevel):
         self.change_theme()
         self._update_highlight()
         self._update_line_num()
+        self.toggle_wrap()
 
     def destroy(self):
         apps.remove(self)
@@ -178,20 +180,38 @@ class PyEditor(Toplevel):
         '''
         view_menu = Menu(menu_bar, tearoff=0)
         self.is_show_line_num = IntVar()
-        self.is_show_line_num.set(int(self.config["line_num"]))
+        try:
+            self.is_show_line_num.set(int(self.config["line_num"]))
+        except KeyError:
+            self.is_show_line_num.set(1)
         view_menu.add_checkbutton(
             label='显示行号', variable=self.is_show_line_num, command=self.toggle_line_num)
+
         self.is_highlight_line = IntVar()
-        self.is_highlight_line.set(int(self.config["highlight"]))
+        try:
+            self.is_highlight_line.set(int(self.config["highlight"]))
+        except KeyError:
+            self.is_highlight_line.set(1)
         view_menu.add_checkbutton(
             label='高亮当前行', variable=self.is_highlight_line, command=self.toggle_highlight)
-        view_menu.add_command(
-            label='字体设置', command=self.toggle_font)
+
+        self.is_wrap = IntVar()
+        try:
+            self.is_wrap.set(int(self.config["wrap"]))
+        except KeyError:
+            self.is_wrap.set(0)
+        view_menu.add_checkbutton(
+            label='自动换行', variable=self.is_wrap, command=self.toggle_wrap)
+
+        view_menu.add_command(label='字体设置', command=self.toggle_font)
         # 在主题菜单中再添加一个子菜单列表
         themes_menu = Menu(menu_bar, tearoff=0)
         view_menu.add_cascade(label='主题', menu=themes_menu)
         self.theme_choice = StringVar()
-        self.theme_choice.set(self.config["theme"])
+        try:
+            self.theme_choice.set(self.config["theme"])
+        except KeyError:
+            self.theme_choice.set("Default")
         for k in sorted(theme_color):
             themes_menu.add_radiobutton(
                 label=k, variable=self.theme_choice, command=self.toggle_change_theme)
@@ -271,17 +291,23 @@ class PyEditor(Toplevel):
         '''
         创建程序主体
         '''
+
         # 创建文本输入框(undo=True启用撤销机制)
         self.content_text = Text(
-            self, wrap='word', undo=True, font=self.custom_font, exportselection=False)
+            self, wrap="none", undo=True, font=self.custom_font, exportselection=False)
         # 创建行号栏
         self.line_number_bar = TextLineNumbers(self, width=30)
         self.line_number_bar.attach(self.content_text)
-        # 创建滚动条
-        self.scroll_bar = Scrollbar(self.content_text)
-        self.scroll_bar["command"] = self.content_text.yview
-        self.content_text["yscrollcommand"] = self.scroll_bar.set
-        self.scroll_bar.pack(side='right', fill='y')
+        # 创建纵向滚动条
+        self.y_scroll_bar = Scrollbar(
+            self.content_text, command=self.content_text.yview)
+        self.content_text["yscrollcommand"] = self.y_scroll_bar.set
+        # 创建横向滚动条
+        self.x_scroll_bar = Scrollbar(
+            self, orient='horizontal', command=self.content_text.xview)
+        self.content_text["xscrollcommand"] = self.x_scroll_bar.set
+        self.y_scroll_bar.pack(side='right', fill='y')
+        self.x_scroll_bar.pack(side="bottom", fill="x")
         self.content_text.pack(side='right', expand='yes', fill='both')
         self.line_number_bar.pack(side='right', fill='y')
 
@@ -303,10 +329,8 @@ class PyEditor(Toplevel):
         self.bind('<Key>', self._update_line_num)
         self.bind("<Button-1>", self._update_line_num)
         self.bind("<ButtonRelease-1>", self._update_highlight)
-        self.scroll_bar.bind(
+        self.y_scroll_bar.bind(
             "<Button-1>", self._update_line_num)
-        # self.scroll_bar.bind(
-        #    "<ButtonRelease-1>", self._update_line_num)
         self.content_text.bind(
             "<MouseWheel>", self._update_line_num)
         self.content_text.bind('<Key>', self._update_highlight)
@@ -342,7 +366,7 @@ class PyEditor(Toplevel):
         '''
 
         def onScrollPress(self, *args):
-            self.scroll_bar.bind("<B1-Motion>", self.line_number_bar.redraw)
+            self.x_scroll_bar.bind("<B1-Motion>", self.line_number_bar.redraw)
 
         def onPressDelay(self, *args):
             self.after(2, self.line_number_bar.redraw)
@@ -469,6 +493,25 @@ class PyEditor(Toplevel):
         fg_color = theme[1]
         bg_color = theme[2]
         self.content_text.config(bg=bg_color, fg=fg_color)
+
+    def toggle_wrap(self):
+        if self.is_wrap.get():
+            if self.x_scroll_bar.winfo_ismapped():
+                self.x_scroll_bar.pack_forget()
+            self.config['wrap'] = True
+            self.content_text.config(wrap="word")
+        else:
+            if not self.x_scroll_bar.winfo_ismapped():
+                self.line_number_bar.pack_forget()
+                self.content_text.pack_forget()
+                self.x_scroll_bar.pack(side="bottom", fill="x")
+                self.content_text.pack(side='right', expand='yes', fill='both')
+                self.line_number_bar.pack(side='right', fill='y')
+            self.config['wrap'] = False
+            self.content_text.config(wrap="none")
+
+        self._update_line_num()
+        self._write_config_()
 
     def toggle_font(self):
         dialog = FontPanel(self)
