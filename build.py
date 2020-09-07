@@ -11,8 +11,9 @@ if __name__ == "__main__":
     if platform == "darwin":
         os.system("python3 ./library/setup.py py2app")
         os.system("cp -r -v ./img ./dist/PyEditor.app/Contents/Resources/")
-        with open("./dist/PyEditor.app/Contents/Info.plist", "r+") as f:
+        with open("./dist/PyEditor.app/Contents/Info.plist", "r") as f:
             string = f.read()
+        with open("./dist/PyEditor.app/Contents/Info.plist", "w") as f:
             string = string.replace("0.0.0", version)
             string = string.replace(
                 "org.pythonmac.unspecified", "space.erickwok")
