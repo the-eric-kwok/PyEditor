@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+from argparse import FileType
+from io import FileIO
 import os
 import json
 import getopt
@@ -19,11 +24,56 @@ from library.TextLineNumber import TextLineNumbers
 
 
 class Root(Tk):
+    full_path = None
+
+    def __init__(self, argv):
+        self.parse_argv(argv)
+        super().__init__()
+        self.withdraw()
+        self.apps = []
+        if self.full_path:
+            app = PyEditor(self, ['-f', self.full_path])
+        else:
+            app = PyEditor(self)
+        self.apps.append(app)
+        app.lift()
+        app.attributes('-topmost', True)
+        app.after_idle(app.attributes, '-topmost', False)
+        app.focus_force()
+        app.mainloop()
+
     def exit(self):
         # 判断apps中实例是否为0，若为0则退出
-        global apps
-        if len(apps) < 1:
+        if len(self.apps) < 1:
             self.quit()
+
+    def parse_argv(self, argv):
+        if len(argv) < 1:
+            pass
+        elif "-" not in argv[0]:
+            filename = os.path.expanduser(argv[0])
+            if not os.path.isabs(filename):
+                filename = os.path.abspath(filename)
+            if not os.path.exists(filename):
+                raise Exception("File not exists!")
+            if not os.path.isfile(filename):  # FIXME
+                raise Exception("This is not a file!")
+            # TODO: 将 filename 赋值给编辑器中的 full_path
+            self.full_path = filename
+        else:
+            try:
+                opts, args = getopt.getopt(argv, "h")
+            except getopt.GetoptError:
+                return
+            for opt_name, opt_value in opts:
+                if opt_name == '-h':
+                    print("""
+PyEditor - A simple editor written in Python
+Usage:
+    PyEditor [filename]
+                    """)
+                    exit()
+                pass
 
 
 class PyEditor(Toplevel):
@@ -43,7 +93,7 @@ class PyEditor(Toplevel):
     pos_y = 0
     encoding = "utf-8"
 
-    def __init__(self, argv, parent):
+    def __init__(self, parent, argv=None):
         super().__init__()
         self.parent = parent
 
@@ -63,26 +113,30 @@ class PyEditor(Toplevel):
         self._create_right_popup_menu()
         self.change_theme()
         self._update_highlight()
-        self.after(100, self.toggle_line_num)
+        self.after(500, self.toggle_line_num)
         self.toggle_wrap()
 
     def destroy(self):
-        apps.remove(self)
+        self.parent.apps.remove(self)
         super().destroy()
 
     def _parse_argv_(self, argv):
         '''
-        处理参数 - 使用参数方式传递窗口位置信息
+        处理参数
         '''
         try:
-            opts, args = getopt.getopt(argv, "x:y:")
+            opts, args = getopt.getopt(argv, "x:y:f:")
         except getopt.GetoptError:
             return
-        for opt, arg in opts:
-            if opt == '-x':
-                self.pos_x = float(arg)
-            elif opt == '-y':
-                self.pos_y = float(arg)
+        for name, value in opts:
+            # 使用参数方式传递窗口位置信息
+            if name == '-x':
+                self.pos_x = float(value)
+            elif name == '-y':
+                self.pos_y = float(value)
+            elif name == '-f':
+                self.full_path = value
+                self.file_name = os.path.basename(self.full_path)
 
     def _read_config_(self):
         '''
@@ -110,7 +164,10 @@ class PyEditor(Toplevel):
         '''
         设置初始窗口的属性
         '''
-        self.title("New - PyEditor")
+        if self.file_name:
+            self.title(self.file_name)
+        else:
+            self.title("New - PyEditor")
         scn_width, scn_height = self.maxsize()
         if (pos_x == 0 and pos_y == 0) or (pos_x < 0 or pos_y < 0):
             self.pos_x = (scn_width - 750) / 4
@@ -339,6 +396,8 @@ class PyEditor(Toplevel):
             "<<Modified>>", lambda e: self._sync_title_dirty_(e))
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
+        if self.full_path:
+            self.__opener__(self.full_path)
 
     def _create_right_popup_menu(self):
         '''
@@ -383,6 +442,7 @@ class PyEditor(Toplevel):
                 onPressDelay(self)
 
     def toggle_line_num(self):
+        self.content_text.get(1.0, END)
         if self.config["line_num"] != bool(self.is_show_line_num.get()):
             self.config["line_num"] = bool(self.is_show_line_num.get())
             self._write_config_()
@@ -554,41 +614,47 @@ PyEditor V1.0
     def new_file(self, event=None):
         self.pos_x += 20
         self.pos_y += 20
-        new = PyEditor(['-x', str(self.pos_x), '-y',
-                        str(self.pos_y)], self.parent)
-        global apps
-        apps.append(new)
+        new = PyEditor(self.parent, ['-x', str(self.pos_x), '-y',
+                                     str(self.pos_y)])
+        self.parent.apps.append(new)
 
-    def open_file(self, event=None):
-        def __opener__():
+    def __opener__(self, input_file=None):
+        def __get_filename__():
             input_file = filedialog.askopenfilename(
                 filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
                            ("Python code", "*.py"), ("Python code", "*.pyw")],
                 title="选择一个文件")
-            if input_file:
-                self.file_name = os.path.basename(input_file)
-                self.full_path = input_file
-                self.title("%s - PyEditor" % self.file_name)
-                self.content_text.delete(1.0, END)
-                with open(input_file, 'rb') as _file:
-                    byte = _file.read()
-                    result = chardet.detect(byte)
-                    text = byte.decode(encoding=result['encoding'])
-                    self.content_text.insert(1.0, text)
-                    self.encoding = result['encoding']
-            self._update_line_num()
-            self._mark_as_clean_()
+            return input_file
+
+        if input_file is None:
+            input_file = __get_filename__()
+
+        if input_file:
+            self.file_name = os.path.basename(input_file)
+            self.full_path = input_file
+            self.title("%s - PyEditor" % self.file_name)
+            self.content_text.delete(1.0, END)
+            with open(input_file, 'rb') as _file:
+                byte = _file.read()
+                result = chardet.detect(byte)
+                text = byte.decode(encoding=result['encoding'])
+                self.content_text.insert(1.0, text)
+                self.encoding = result['encoding']
+        self._update_line_num()
+        self._mark_as_clean_()
+
+    def open_file(self, event=None):
 
         if self.content_text.edit_modified():
             dialog = OkCancelSaveBox(self, "你确定要打开新文件吗？\n当前文件中所有的修改都将丢失")
             self.wait_window(dialog.top)
             if dialog.get() == "<<Ok>>":
-                __opener__()
+                self.__opener__()
 
             elif dialog.get() == "<<Save>>":
                 self.save()
         else:
-            __opener__()
+            self.__opener__()
 
     def save(self, event=None):
         if self.full_path is None:
@@ -692,13 +758,4 @@ def resource_path(relative_path):
 
 
 if "__main__" == __name__:
-    root = Root()
-    root.withdraw()
-    apps = []
-    app = PyEditor(sys.argv[1:], root)
-    apps.append(app)
-    app.lift()
-    app.attributes('-topmost', True)
-    app.after_idle(app.attributes, '-topmost', False)
-    app.focus_force()
-    app.mainloop()
+    root = Root(sys.argv[1:])
