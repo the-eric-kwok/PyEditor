@@ -5,13 +5,13 @@ COMMAND = ['new_file', 'open_file', 'save',
 CH_COMM = ['新建文件', '打开文件', '保存文件', '剪切', '复制', '粘贴', '撤销', '重做', '查找']
 
 
-theme_color = {  # 行号栏     背景色      前景色
-    'Default': ['#F0E68C', '#000000', '#FFFFFF'],
-    'Greygarious': ['#F0E68C', '#83406A', '#D1D4D1'],
-    'Aquamarine': ['#F0E68C', '#5B8340', '#D1E7E0'],
-    'Bold Beige': ['#F0E68C', '#4B4620', '#FFF0E1'],
-    'Cobalt Blue': ['#F0E68C', '#ffffBB', '#3333aa'],
-    'Olive Green': ['#F0E68C', '#D1E7E0', '#5B8340'],
+theme_color = {  # 背景色      前景色
+    'Default': ['#000000', '#FFFFFF'],
+    'Greygarious': ['#83406A', '#D1D4D1'],
+    'Aquamarine': ['#5B8340', '#D1E7E0'],
+    'Bold Beige': ['#4B4620', '#FFF0E1'],
+    'Cobalt Blue': ['#ffffBB', '#3333aa'],
+    'Olive Green': ['#D1E7E0', '#5B8340'],
 }
 
 NOT_DIRTY = ["F1", "F2", "F3", "F4", "F5", "F6", "F7",

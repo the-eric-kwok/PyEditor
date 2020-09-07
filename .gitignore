@@ -6,3 +6,4 @@ dist
 build
 *.spec
 .eggs
+.PyEditor.json

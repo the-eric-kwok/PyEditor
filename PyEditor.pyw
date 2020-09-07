@@ -2,6 +2,7 @@ import os
 import json
 import getopt
 from sys import platform
+import sys
 
 from tkinter import *
 from tkinter import filedialog, messagebox
@@ -37,11 +38,7 @@ class PyEditor(Toplevel):
         "font_size": 12,
         "wrap": False
     }
-    if getattr(sys, 'frozen', True):
-        # 如果是通过PyInstaller打包的绿色版本则将配置文件放到用户家目录
-        config_file = os.path.join(os.path.expanduser("~"), ".PyEditor.json")
-    else:
-        config_file = os.path.join(os.path.curdir, ".PyEditor.json")
+    config_file = os.path.join(os.path.curdir, ".PyEditor.json")
     pos_x = 0
     pos_y = 0
     encoding = "utf-8"
@@ -66,7 +63,7 @@ class PyEditor(Toplevel):
         self._create_right_popup_menu()
         self.change_theme()
         self._update_highlight()
-        self._update_line_num()
+        self.after(100, self.toggle_line_num)
         self.toggle_wrap()
 
     def destroy(self):
@@ -296,20 +293,21 @@ class PyEditor(Toplevel):
         self.content_text = Text(
             self, wrap="none", undo=True, font=self.custom_font, exportselection=False)
         # 创建行号栏
-        self.line_number_bar = TextLineNumbers(self, width=30)
+        self.line_number_bar = TextLineNumbers(
+            self, width=30, background='#ECECEC')
         self.line_number_bar.attach(self.content_text)
         # 创建纵向滚动条
         self.y_scroll_bar = Scrollbar(
-            self.content_text, command=self.content_text.yview)
+            self, command=self.content_text.yview)
         self.content_text["yscrollcommand"] = self.y_scroll_bar.set
         # 创建横向滚动条
         self.x_scroll_bar = Scrollbar(
             self, orient='horizontal', command=self.content_text.xview)
         self.content_text["xscrollcommand"] = self.x_scroll_bar.set
         self.y_scroll_bar.pack(side='right', fill='y')
-        self.x_scroll_bar.pack(side="bottom", fill="x")
+        if not self.is_wrap.get():
+            self.x_scroll_bar.pack(side="bottom", fill="x")
         self.content_text.pack(side='right', expand='yes', fill='both')
-        self.line_number_bar.pack(side='right', fill='y')
 
         # Binding part
         self.bind(key_binding["new"][0], self.new_file)
@@ -385,16 +383,14 @@ class PyEditor(Toplevel):
                 onPressDelay(self)
 
     def toggle_line_num(self):
-        self.config["show_line_num"] = bool(self.is_show_line_num.get())
-        self._write_config_()
-        if self.config["show_line_num"]:
+        if self.config["line_num"] != bool(self.is_show_line_num.get()):
+            self.config["line_num"] = bool(self.is_show_line_num.get())
+            self._write_config_()
+        if self.config["line_num"]:
             self._update_line_num()
-            try:
-                # 尝试获取pack信息，获取失败就意味着还没有pack过
-                self.line_number_bar.pack_info()
-            except TclError as e:
-                if "isn't packed" in str(e):
-                    self.line_number_bar.pack(side='right')
+            # 尝试获取pack信息，获取失败就意味着还没有pack过
+            if not self.line_number_bar.winfo_ismapped():
+                self.line_number_bar.pack(side='right', fill='y')
         else:
             try:
                 self.line_number_bar.pack_forget()
@@ -488,10 +484,8 @@ class PyEditor(Toplevel):
             theme = theme_color.get("Default")
             self.config["theme"] = "Default"
             self._write_config_()
-        line_num_color = theme[0]
-        self.line_number_bar.config(bg=line_num_color)
-        fg_color = theme[1]
-        bg_color = theme[2]
+        fg_color = theme[0]
+        bg_color = theme[1]
         self.content_text.config(bg=bg_color, fg=fg_color)
 
     def toggle_wrap(self):
@@ -502,11 +496,13 @@ class PyEditor(Toplevel):
             self.content_text.config(wrap="word")
         else:
             if not self.x_scroll_bar.winfo_ismapped():
-                self.line_number_bar.pack_forget()
+                if self.line_number_bar.winfo_ismapped():
+                    self.line_number_bar.pack_forget()
                 self.content_text.pack_forget()
                 self.x_scroll_bar.pack(side="bottom", fill="x")
                 self.content_text.pack(side='right', expand='yes', fill='both')
-                self.line_number_bar.pack(side='right', fill='y')
+                if self.is_show_line_num.get():
+                    self.line_number_bar.pack(side='right', fill='y')
             self.config['wrap'] = False
             self.content_text.config(wrap="none")
 
@@ -541,9 +537,15 @@ class PyEditor(Toplevel):
 
     def show_messagebox(self, type):
         if type == "帮助":
-            messagebox.showinfo("帮助", "这是帮助文档！", icon='question')
+            messagebox.showinfo("帮助", """
+此编辑器支持简单的文本编辑，请在菜单栏中查看主要功能及主要快捷方式
+            """, icon='question')
         else:
-            messagebox.showinfo("关于", "PyEditor_V0.1")
+            messagebox.showinfo("关于", """
+PyEditor V1.0
+
+© 2020 郭耀铭 All Rights Reserved.
+            """, icon="info")
 
     def select_all(self, event=None):
         self.content_text.tag_add('sel', '1.0', 'end')
