@@ -3,8 +3,28 @@ Simple text editor made with python.
 
 ## Run
 **Dependency**
-1. chardet
-   Install by `pip3 install chardet`
+1. Tkinter
+
+   On default this is bundled with python3, but on some Linux distro you need to install it manually by
+   
+   ```
+   sudo apt-get install python3-tk
+   ```
+   
+2. chardet
+
+   Install by 
+   ```
+   pip3 install chardet
+   ```
+
+3. Pillow (Only on Linux)
+
+   Install by 
+   ```
+   pip3 install Pillow
+   sudo apt-get install python3-pil.imagetk
+   ```
 
 Run in terminal
 ```
@@ -22,7 +42,7 @@ python3 editor.pyw
    
    then run
    ```
-   python3 mac_build.py
+   python3 build.py
    ```
    
 - ### On Windows
@@ -32,14 +52,24 @@ python3 editor.pyw
 
       Install by `pip3 install pyinstaller`
 
-   then run in Powershell
+   then run
 
    ```
-   powershell -NoProfile -F win_build.ps1
+   python3 build.py
    ```
    
-   or right click on win_build.ps1 and select "Run in Powershell".
+- ### On Linux
+   **Dependency**
+   
+   1. PyInstaller
+      Install by `pip3 install pyinstaller`
+      
+   then run
+   ```
+   python3 build.py
+   ```
 
 
+After that, you will find the executable file or app bundle under dist folder.
 
-After that, you will find the exe file or app bundle under dist folder.
+

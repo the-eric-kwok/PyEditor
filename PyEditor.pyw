@@ -5,7 +5,7 @@ from argparse import FileType
 from io import FileIO
 import os
 import json
-import getopt
+from getopt import getopt, GetoptError
 from sys import platform
 import sys
 
@@ -61,8 +61,8 @@ class Root(Tk):
             self.full_path = filename
         else:
             try:
-                opts, args = getopt.getopt(argv, "h")
-            except getopt.GetoptError:
+                opts, args = getopt(argv, "h")
+            except GetoptError:
                 return
             for opt_name, opt_value in opts:
                 if opt_name == '-h':
@@ -124,8 +124,8 @@ class PyEditor(Toplevel):
         处理参数
         '''
         try:
-            opts, args = getopt.getopt(argv, "x:y:f:")
-        except getopt.GetoptError:
+            opts, args = getopt(argv, "x:y:f:")
+        except GetoptError:
             return
         for name, value in opts:
             # 使用参数方式传递窗口位置信息
@@ -176,7 +176,14 @@ class PyEditor(Toplevel):
             self.pos_y = pos_y
         wm_val = '1050x600+%d+%d' % (self.pos_x, self.pos_y)
         self.geometry(wm_val)
-        self.iconbitmap(resource_path("editor.ico"))  # FIXME Linux下无法执行此语句
+        try:
+            self.iconbitmap(resource_path("editor.ico"))
+        except:
+            import PIL.Image
+            import PIL.ImageTk
+            icon = PIL.Image.open(resource_path("editor.ico"))
+            icon = PIL.ImageTk.PhotoImage(icon)
+            self.parent.call('wm', 'iconphoto', self._w, icon)
         self.protocol('WM_DELETE_WINDOW', self.close_editor)
         self.bind(key_binding["close"][0], self.close_editor)
         self.bind(key_binding["close"][1], self.close_editor)
@@ -753,7 +760,8 @@ def resource_path(relative_path):
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = os.path.join(sys._MEIPASS, 'img')
     except Exception:
-        base_path = os.path.abspath(os.path.join(".", "img"))
+        base_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "img"))
     return os.path.join(base_path, relative_path)
 
 
