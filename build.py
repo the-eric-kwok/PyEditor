@@ -20,12 +20,16 @@ if __name__ == "__main__":
             f.write(string)
 
     elif platform == "win32":
-        command = 'pyinstaller -w --icon="Icon.ico" '
+        # Build both bundle and standalone
+        command = ""
+        base_command_1 = 'pyinstaller -w --icon="Icon.ico" '
+        base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" '
         for (dirpath, dirnames, filenames) in os.walk("img"):
             for file in filenames:
                 command += '--add-binary="img\%s;img" ' % file
         command += 'PyEditor.pyw'
-        os.system(command)
+        os.system(base_command_1 + command)
+        os.system(base_command_2 + command)
 
     else:
         print("""
