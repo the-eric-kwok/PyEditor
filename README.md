@@ -5,11 +5,20 @@ Simple text editor made with python.
 **Dependency**
 1. Tkinter
 
-	On default this is bundled with python3, but on some Linux distro you need to install it manually by
+	- Windows
 
-	```
-	sudo apt-get install python3-tk
-	```
+		This is embedded in python3 which is downloaded from [here](https://www.python.org/downloads/)
+		
+	- MacOS	
+
+		The default version of python3 do not contain tkinter. Download and install a new one from [here](https://www.python.org/downloads/)
+	
+	- Debian Linux / Ubuntu
+		Run this command in terminal
+		```
+		sudo apt-get install python3-tk
+		```
+		and there you go!
 
 2. chardet
 
@@ -58,8 +67,14 @@ Simple text editor made with python.
         Extract tkdnd2.8 which you downloaded in the previous step and put the `tkdnd2.8` folder here.
 
     - On MacOS:
+		Type `which python3` to see where your python lib is. For example, mine is 
+		```
+		/Library/Frameworks/Python.framework/Versions/3.8/bin/python3
+		```
 
-        
+        So open Finder, hit Shift-Command-G combo and enter `/Library/Frameworks/Python.framework/Versions/3.8/`. Be careful, the python path should **NOT** include `bin/python3`. Then hit enter. You will see a folder called `lib`, double click and open it. Here is where you want to copy the tkdnd2.8 folder to.
+		
+		In this example, the full path of my python lib is `/Library/Frameworks/Python.framework/Versions/3.8/lib`
 
 Then run in terminal
 ```
