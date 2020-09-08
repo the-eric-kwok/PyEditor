@@ -20,8 +20,6 @@ if __name__ == "__main__":
             f.write(string)
 
     elif platform == "win32":
-        import PyInstaller.__main__ as PyInst
-
         command = 'pyinstaller -w --icon="Icon.ico" '
         for (dirpath, dirnames, filenames) in os.walk("img"):
             for file in filenames:

@@ -177,7 +177,7 @@ class PyEditor(Toplevel):
             self.pos_y = pos_y
         wm_val = '750x450+%d+%d' % (self.pos_x, self.pos_y)
         self.geometry(wm_val)
-        self.iconbitmap(resource_path("editor.ico"))
+        self.iconbitmap("./editor.ico") # FIXME Linux下无法执行此语句
         self.protocol('WM_DELETE_WINDOW', self.close_editor)
         self.bind(key_binding["close"][0], self.close_editor)
         self.bind(key_binding["close"][1], self.close_editor)
@@ -365,6 +365,8 @@ class PyEditor(Toplevel):
         if not self.is_wrap.get():
             self.x_scroll_bar.pack(side="bottom", fill="x")
         self.content_text.pack(side='right', expand='yes', fill='both')
+        # FIXME
+        self.line_number_bar.pack(side='right', fill='y')
 
         # Binding part
         self.bind(key_binding["new"][0], self.new_file)
