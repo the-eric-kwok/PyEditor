@@ -48,7 +48,8 @@ if __name__ == "__main__":
                 command += '--add-binary="img/%s:img" ' % file
         command += 'PyEditor.pyw'
         os.system(base_command_1 + command)
-        os.system("mv dist/PyEditor dist/PyEditor.bundle")
+        if os.path.exists("dist/PyEditor"):
+            os.system("mv dist/PyEditor dist/PyEditor.bundle")
         os.system(base_command_2 + command)
 
     else:
