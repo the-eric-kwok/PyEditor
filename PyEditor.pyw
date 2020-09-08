@@ -56,9 +56,8 @@ class Root(Tk):
                 filename = os.path.abspath(filename)
             if not os.path.exists(filename):
                 raise Exception("File not exists!")
-            if not os.path.isfile(filename):  # FIXME
+            if not os.path.isfile(filename):
                 raise Exception("This is not a file!")
-            # TODO: 将 filename 赋值给编辑器中的 full_path
             self.full_path = filename
         else:
             try:
@@ -175,9 +174,9 @@ class PyEditor(Toplevel):
         else:
             self.pos_x = pos_x
             self.pos_y = pos_y
-        wm_val = '750x450+%d+%d' % (self.pos_x, self.pos_y)
+        wm_val = '1050x600+%d+%d' % (self.pos_x, self.pos_y)
         self.geometry(wm_val)
-        self.iconbitmap("./editor.ico") # FIXME Linux下无法执行此语句
+        self.iconbitmap(resource_path("editor.ico"))  # FIXME Linux下无法执行此语句
         self.protocol('WM_DELETE_WINDOW', self.close_editor)
         self.bind(key_binding["close"][0], self.close_editor)
         self.bind(key_binding["close"][1], self.close_editor)
@@ -345,10 +344,9 @@ class PyEditor(Toplevel):
         '''
         创建程序主体
         '''
-
-        # 创建文本输入框(undo=True启用撤销机制)
+        # 创建文本输入框(undo=True启用撤销机制，设定最小宽度为1，以免行号栏被推出窗口外)
         self.content_text = Text(
-            self, wrap="none", undo=True, font=self.custom_font, exportselection=False)
+            self, wrap="none", undo=True, width=1, height=1, font=self.custom_font, exportselection=False)
         # 创建行号栏
         self.line_number_bar = TextLineNumbers(
             self, width=30, background='#ECECEC')
@@ -362,11 +360,11 @@ class PyEditor(Toplevel):
             self, orient='horizontal', command=self.content_text.xview)
         self.content_text["xscrollcommand"] = self.x_scroll_bar.set
         self.y_scroll_bar.pack(side='right', fill='y')
-        if not self.is_wrap.get():
+        if not self.is_wrap.get():  # 如果自动换行则不需要显示底部横向滚动条
             self.x_scroll_bar.pack(side="bottom", fill="x")
-        self.content_text.pack(side='right', expand='yes', fill='both')
-        # FIXME
-        self.line_number_bar.pack(side='right', fill='y')
+        self.content_text.pack(side='right', expand=True, fill='both')
+        if self.is_show_line_num.get():  # 如果配置中不需要开启行号栏则不显示行号栏
+            self.line_number_bar.pack(side='left', fill='y')
 
         # Binding part
         self.bind(key_binding["new"][0], self.new_file)
@@ -452,7 +450,7 @@ class PyEditor(Toplevel):
             self._update_line_num()
             # 尝试获取pack信息，获取失败就意味着还没有pack过
             if not self.line_number_bar.winfo_ismapped():
-                self.line_number_bar.pack(side='right', fill='y')
+                self.line_number_bar.pack(side='left', fill='y')
         else:
             try:
                 self.line_number_bar.pack_forget()
@@ -564,7 +562,7 @@ class PyEditor(Toplevel):
                 self.x_scroll_bar.pack(side="bottom", fill="x")
                 self.content_text.pack(side='right', expand='yes', fill='both')
                 if self.is_show_line_num.get():
-                    self.line_number_bar.pack(side='right', fill='y')
+                    self.line_number_bar.pack(side='left', fill='y')
             self.config['wrap'] = False
             self.content_text.config(wrap="none")
 

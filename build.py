@@ -6,9 +6,9 @@ import os
 from sys import platform
 
 if __name__ == "__main__":
-    print("请输入版本号: ", end="")
-    version = input()
     if platform == "darwin":
+        print("请输入版本号: ", end="")
+        version = input()
         os.system("python3 ./library/setup.py py2app")
         os.system("cp -r -v ./img ./dist/PyEditor.app/Contents/Resources/")
         with open("./dist/PyEditor.app/Contents/Info.plist", "r") as f:
