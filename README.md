@@ -26,7 +26,7 @@ Simple text editor made with python.
    sudo apt-get install python3-pil.imagetk
    ```
 
-Run in terminal
+Then run in terminal
 ```
 python3 editor.pyw
 ```
