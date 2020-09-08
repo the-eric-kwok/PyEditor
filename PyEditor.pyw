@@ -183,7 +183,7 @@ class PyEditor(Toplevel):
             import PIL.ImageTk
             icon = PIL.Image.open(resource_path("editor.ico"))
             icon = PIL.ImageTk.PhotoImage(icon)
-            self.call('wm', 'iconphoto', self._w, icon)
+            self.parent.call('wm', 'iconphoto', self._w, icon)
         self.protocol('WM_DELETE_WINDOW', self.close_editor)
         self.bind(key_binding["close"][0], self.close_editor)
         self.bind(key_binding["close"][1], self.close_editor)
