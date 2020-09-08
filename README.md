@@ -6,6 +6,9 @@ Simple text editor made with python.
 1. chardet
    Install by `pip3 install chardet`
 
+2. Pillow (Only on Linux)
+   Install by `pip3 install Pillow`
+
 Run in terminal
 ```
 python3 editor.pyw
