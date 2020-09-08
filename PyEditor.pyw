@@ -24,13 +24,18 @@ from library.OkCancelSaveBox import OkCancelSaveBox
 from library.TextLineNumber import TextLineNumbers
 from library.TkinterDnD2 import *
 
+tkroot = tk.Tk()
+tkroot.withdraw()
 try:
-    DnD_try = TkinterDnD.Tk()
+    tkroot.tk.call('package', 'require', 'tkdnd')
     tk = TkinterDnD.Tk
     TKDND = True
 except RuntimeError:
     tk = tk.Tk
     TKDND = False
+finally:
+    tkroot.destroy()
+    tkroot.quit()
 
 
 class Root(tk):
@@ -118,7 +123,10 @@ class PyEditor(Toplevel):
 
         if TKDND:
             def drop(self, event):
-                self.__opener__(event.data[1:-1])
+                if event.data[0] == "{" and event.data[-1] == "}":
+                    event.data = event.data[1: -1]
+                self.after(5, lambda: self.open_file(file=event.data))
+                # self.__opener__(event.data)
 
             self.drop_target_register(DND_FILES)
             self.dnd_bind('<<Drop>>', lambda e: drop(self, e))
@@ -668,18 +676,19 @@ PyEditor V1.0
         self._update_line_num()
         self._mark_as_clean_()
 
-    def open_file(self, event=None):
+    def open_file(self, event=None, file=None):
 
         if self.content_text.edit_modified():
             dialog = OkCancelSaveBox(self, "你确定要打开新文件吗？\n当前文件中所有的修改都将丢失")
             self.wait_window(dialog.top)
             if dialog.get() == "<<Ok>>":
-                self.__opener__()
+                self.__opener__(file)
 
             elif dialog.get() == "<<Save>>":
                 self.save()
+                self.__opener__(file)
         else:
-            self.__opener__()
+            self.__opener__(file)
 
     def save(self, event=None):
         if self.full_path is None:
