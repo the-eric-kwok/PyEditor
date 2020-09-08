@@ -30,6 +30,18 @@ if __name__ == "__main__":
         command += 'PyEditor.pyw'
         os.system(base_command_1 + command)
         os.system(base_command_2 + command)
+        
+    elif platform == "linux":
+        command = ""
+        base_command_1 = 'pyinstaller -w --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" '
+        base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" --path="dist/standalone"'
+        for (dirpath, dirnames, filenames) in os.walk("img"):
+            for file in filenames:
+                command += '--add-binary="img/%s:img" ' % file
+        command += 'PyEditor.pyw'
+        os.system(base_command_1 + command)
+        os.system("mv dist/PyEditor dist/PyEditor.bundle")
+        os.system(base_command_2 + command)
 
     else:
         print("""

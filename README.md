@@ -62,9 +62,11 @@ python3 editor.pyw
    **Dependency**
    
    1. PyInstaller
+   
       Install by `pip3 install pyinstaller`
       
    then run
+   
    ```
    python3 build.py
    ```
