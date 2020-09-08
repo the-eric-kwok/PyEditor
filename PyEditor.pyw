@@ -9,6 +9,7 @@ from getopt import getopt, GetoptError
 from sys import platform
 import sys
 
+import tkinter as tk
 from tkinter import *
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
@@ -21,15 +22,25 @@ from library.EditorStyle import *
 from library.Tooltip import Tooltip
 from library.OkCancelSaveBox import OkCancelSaveBox
 from library.TextLineNumber import TextLineNumbers
+from library.TkinterDnD2 import *
+
+try:
+    DnD_try = TkinterDnD.Tk()
+    tk = TkinterDnD.Tk
+    TKDND = True
+except RuntimeError:
+    tk = tk.Tk
+    TKDND = False
 
 
-class Root(Tk):
+class Root(tk):
     full_path = None
 
     def __init__(self, argv):
         self.parse_argv(argv)
         super().__init__()
         self.withdraw()
+        self.title("Root")
         self.apps = []
         if self.full_path:
             app = PyEditor(self, ['-f', self.full_path])
@@ -104,6 +115,13 @@ class PyEditor(Toplevel):
                 self, family=self.config["font_family"], size=self.config["font_size"])
         except KeyError:
             self.custom_font = tkFont.Font(self, family='TkFixedFont', size=12)
+
+        if TKDND:
+            def drop(self, event):
+                self.__opener__(event.data[1:-1])
+
+            self.drop_target_register(DND_FILES)
+            self.dnd_bind('<<Drop>>', lambda e: drop(self, e))
 
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
         self._create_menu_bar_()
