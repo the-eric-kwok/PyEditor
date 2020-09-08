@@ -22,19 +22,27 @@ if __name__ == "__main__":
     elif platform == "win32":
         # Build both bundle and standalone
         command = ""
-        base_command_1 = 'pyinstaller -w --icon="Icon.ico" '
-        base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" '
+        python_path = os.popen("where.exe python3").read().splitlines()[0]
+        if "WindowsApps" in python_path:
+            python_path = os.popen("where.exe python").read().splitlines()[0]
+            if "WindowsApps" in python_path:
+                print("找不到 python 可执行环境，请检查你的 PATH 环境变量")
+        print(python_path.replace("python.exe", "tcl\\tkdnd2.8"))
+        base_command_1 = 'pyinstaller -w --icon="Icon.ico" --noconfirm --add-data "%s;tkdnd2.8" ' % python_path.replace(
+            "python.exe", "tcl\\tkdnd2.8")
+        base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" --noconfirm --add-data "%s;tkdnd2.8" ' % python_path.replace(
+            "python.exe", "tcl\\tkdnd2.8")
         for (dirpath, dirnames, filenames) in os.walk("img"):
             for file in filenames:
                 command += '--add-binary="img\%s;img" ' % file
         command += 'PyEditor.pyw'
         os.system(base_command_1 + command)
         os.system(base_command_2 + command)
-        
+
     elif platform == "linux":
         command = ""
-        base_command_1 = 'pyinstaller -w --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" '
-        base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" --path="dist/standalone"'
+        base_command_1 = 'pyinstaller -w --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" --noconfirm '
+        base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" --path="dist/standalone" --noconfirm '
         for (dirpath, dirnames, filenames) in os.walk("img"):
             for file in filenames:
                 command += '--add-binary="img/%s:img" ' % file

@@ -31,6 +31,8 @@
 - [x] 文件拖放功能
     - [ ] To be test on linux
 - [ ] 使用更优雅的方式判断系统中是否存在tkdnd库（消除启动时多余的弹窗）
+- [x] PyInstaller 无法打包 tkdnd 库
+- [ ] Ubuntu 未进行打包测试
 - [ ] 代码高亮
 - [ ] 注册到系统的“使用…打开”功能
     - [ ] macOS
