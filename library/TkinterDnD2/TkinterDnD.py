@@ -276,7 +276,6 @@ class Tk(tkinter.Tk, DnDWrapper):
     def __init__(self, *args, **kw):
         tkinter.Tk.__init__(self, *args, **kw)
         self.title("DND")
-        self.withdraw()
         self.TkdndVersion = _require(self)
 
 
