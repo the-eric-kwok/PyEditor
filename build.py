@@ -21,6 +21,9 @@ if __name__ == "__main__":
 
     elif platform == "win32":
         # Build both bundle and standalone
+        test = os.popen("pyinstaller").read()
+        if "pyinstaller: not found" in test:
+            os.system("pip3 install pyinstaller")
         command = ""
         python_path = os.popen("where.exe python3").read().splitlines()[0]
         if "WindowsApps" in python_path:
@@ -40,6 +43,9 @@ if __name__ == "__main__":
         os.system(base_command_2 + command)
 
     elif platform == "linux":
+        test = os.popen("pyinstaller").read().splitlines()[0]
+        if "pyinstaller: not found" in test:
+            os.system("pip3 install pyinstaller")
         command = ""
         base_command_1 = 'pyinstaller -w --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" --noconfirm '
         base_command_2 = 'pyinstaller -w -F --icon="Icon.ico" --hidden-import="PIL._tkinter_finder" --path="dist/standalone" --noconfirm '
