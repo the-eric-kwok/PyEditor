@@ -173,7 +173,7 @@ class PyEditor(Toplevel):
         '''
         设置初始窗口的属性
         '''
-        self.title("New - %s" % self._name)
+        self.title("New - PyEditor")
         scn_width, scn_height = self.maxsize()
         if (pos_x == 0 and pos_y == 0) or (pos_x < 0 or pos_y < 0):
             self.pos_x = (scn_width - 750) / 4
@@ -333,14 +333,14 @@ class PyEditor(Toplevel):
         '''
         if self.content_text.edit_modified():
             if self.file_name:
-                self.title("%s* - %s" % (self.file_name, self._name))
+                self.title("%s* - PyEditor" % self.file_name)
             else:
-                self.title("New* - %s" % self._name)
+                self.title("New* - PyEditor")
         else:
             if self.file_name:
-                self.title("%s - %s" % (self.file_name, self._name))
+                self.title("%s - PyEditor" % self.file_name)
             else:
-                self.title("New - %s" % self._name)
+                self.title("New - PyEditor")
 
     def _mark_as_clean_(self):
         '''
@@ -349,9 +349,9 @@ class PyEditor(Toplevel):
         调用Text.edit_modified(False)来标记编辑器为未经编辑
         '''
         if self.file_name:
-            self.title("%s - %s" % (self.file_name, self._name))
+            self.title("%s - PyEditor" % self.file_name)
         else:
-            self.title("New - %s" % self._name)
+            self.title("New - PyEditor")
         self.content_text.edit_modified(False)
 
     def _create_body_(self):
@@ -414,7 +414,7 @@ class PyEditor(Toplevel):
             self.__opener__(self.full_path)
 
         if TKDND:
-            def __drop__(self, event):
+            def __drop_files__(self, event):
                 print(event.name, event.data)
                 if event.data[0] == "{" and event.data[-1] == "}":
                     event.data = event.data[1:-1]
@@ -428,9 +428,17 @@ class PyEditor(Toplevel):
                     else:
                         self.open_file(file=item)
 
+            def __drop_text__(self, event):
+                if event.name == '<<Drop:DND_Text>>':
+                    print(event.data, event.x_root, event.y_root)
+                    # TODO 根据 event.x_root, event.y_root 计算出最接近的光标位置进行插入
+
             self.content_text.drop_target_register("DND_Files")
-            # self.content_text.drop_target_register("DND_Text")
-            self.content_text.dnd_bind('<<Drop>>', lambda e: __drop__(self, e))
+            self.content_text.dnd_bind(
+                '<<Drop:DND_Files>>', lambda e: __drop_files__(self, e))
+            self.content_text.drop_target_register("DND_Text")
+            self.content_text.dnd_bind(
+                '<<Drop:DND_Text>>', lambda e: __drop_text__(self, e))
 
     def _create_right_popup_menu(self):
         '''
@@ -524,7 +532,7 @@ class PyEditor(Toplevel):
             with open(file_name, 'wb') as f:
                 f.write(b_content)
             self.file_name = os.path.basename(file_name)
-            self.title("%s - %s" % (self.file_name, self._name))
+            self.title("%s - PyEditor" % self.file_name)
         except IOError:
             messagebox.showwarning("保存", "保存失败！")
 
@@ -666,7 +674,7 @@ PyEditor V1.0
         if input_file:
             self.file_name = os.path.basename(input_file)
             self.full_path = input_file
-            self.title("%s - %s" % (self.file_name, self._name))
+            self.title("%s - PyEditor" % self.file_name)
             self.content_text.delete(1.0, END)
             with open(input_file, 'rb') as _file:
                 byte = _file.read()
@@ -700,7 +708,7 @@ PyEditor V1.0
 
     def save_as(self, event=None):
         input_file = filedialog.asksaveasfilename(
-            filetypes=[("All Files", "*.*"), ("文本文档", "*.txt")]
+            filetypes=[("文本文档", "*.txt"), ("All Files", "*.*")]
         )
         if input_file:
             self.file_name = os.path.basename(input_file)
