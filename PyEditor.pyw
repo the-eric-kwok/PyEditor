@@ -437,6 +437,9 @@ class PyEditor(Toplevel):
                 if event.name == '<<Drop:DND_Text>>':
                     print(event.data, event.x_root, event.y_root)
                     # TODO 根据 event.x_root, event.y_root 计算出最接近的光标位置进行插入
+                    self.content_text.insert("@%d,%d" %
+                                             (event.x_root, event.y_root), event.data)
+                    # self.content_text.insert("@60,306", event.data)
 
             self.content_text.drop_target_register("DND_Files")
             self.content_text.dnd_bind(
