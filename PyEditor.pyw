@@ -9,7 +9,6 @@ from getopt import getopt, GetoptError
 from sys import platform
 import sys
 
-import tkinter as tk
 from tkinter import *
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
@@ -22,26 +21,12 @@ from library.EditorStyle import *
 from library.Tooltip import Tooltip
 from library.OkCancelSaveBox import OkCancelSaveBox
 from library.TextLineNumber import TextLineNumbers
-from library.TkinterDnD2 import *
+from library.TkinterDnD2.TkinterDnD import DnDEvent, _require
 
-'''
-tkroot = tk.Tk()
-tkroot.withdraw()
-try:
-    tkroot.tk.call('package', 'require', 'tkdnd')
-    tk = TkinterDnD.Tk
-    TKDND = True
-except TclError:
-    tk = tk.Tk
-    TKDND = False
-finally:
-    tkroot.destroy()
-    tkroot.quit()
-'''
 TKDND = False
 
 
-class Root(tk.Tk):
+class Root(Tk):
     full_path = None
 
     def __init__(self, argv):
@@ -50,7 +35,7 @@ class Root(tk.Tk):
         self.withdraw()
         self.title("Root")
         try:
-            self.TkdndVersion = TkinterDnD._require(self)
+            self.TkdndVersion = _require(self)
             global TKDND
             TKDND = True
         except RuntimeError:
@@ -130,15 +115,6 @@ class PyEditor(Toplevel):
         except KeyError:
             self.custom_font = tkFont.Font(self, family='TkFixedFont', size=12)
 
-        if TKDND:
-            def drop(self, event):
-                if event.data[0] == "{" and event.data[-1] == "}":
-                    event.data = event.data[1: -1]
-                self.after(5, lambda: self.open_file(file=event.data))
-
-            self.drop_target_register(DND_FILES)
-            self.dnd_bind('<<Drop>>', lambda e: drop(self, e))
-
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
         self._create_menu_bar_()
         self._create_shortcut_bar_()
@@ -197,10 +173,7 @@ class PyEditor(Toplevel):
         '''
         设置初始窗口的属性
         '''
-        if self.file_name:
-            self.title(self.file_name)
-        else:
-            self.title("New - PyEditor")
+        self.title("New - %s" % self._name)
         scn_width, scn_height = self.maxsize()
         if (pos_x == 0 and pos_y == 0) or (pos_x < 0 or pos_y < 0):
             self.pos_x = (scn_width - 750) / 4
@@ -360,14 +333,14 @@ class PyEditor(Toplevel):
         '''
         if self.content_text.edit_modified():
             if self.file_name:
-                self.title("%s* - PyEditor" % self.file_name)
+                self.title("%s* - %s" % (self.file_name, self._name))
             else:
-                self.title("New* - PyEditor")
+                self.title("New* - %s" % self._name)
         else:
             if self.file_name:
-                self.title("%s - PyEditor" % self.file_name)
+                self.title("%s - %s" % (self.file_name, self._name))
             else:
-                self.title("New - PyEditor")
+                self.title("New - %s" % self._name)
 
     def _mark_as_clean_(self):
         '''
@@ -376,9 +349,9 @@ class PyEditor(Toplevel):
         调用Text.edit_modified(False)来标记编辑器为未经编辑
         '''
         if self.file_name:
-            self.title("%s - PyEditor" % self.file_name)
+            self.title("%s - %s" % (self.file_name, self._name))
         else:
-            self.title("New - PyEditor")
+            self.title("New - %s" % self._name)
         self.content_text.edit_modified(False)
 
     def _create_body_(self):
@@ -439,6 +412,23 @@ class PyEditor(Toplevel):
         self.content_text.tag_configure('active_line', background='#EEEEE0')
         if self.full_path:
             self.__opener__(self.full_path)
+
+        if TKDND:
+            def __drop__(self, event):
+                print(event.name, event.data)
+                files = event.data.split(" ")
+                for item in files:
+                    if event.data[0] == "{" and event.data[-1] == "}":
+                        event.data = event.data[1: -1]
+                    if files.index(item) > 0:
+                        new = self.new_file()
+                        new.open_file(file=item)
+                    else:
+                        self.open_file(file=item)
+
+            self.content_text.drop_target_register("DND_Files")
+            # self.content_text.drop_target_register("DND_Text")
+            self.content_text.dnd_bind('<<Drop>>', lambda e: __drop__(self, e))
 
     def _create_right_popup_menu(self):
         '''
@@ -532,7 +522,7 @@ class PyEditor(Toplevel):
             with open(file_name, 'wb') as f:
                 f.write(b_content)
             self.file_name = os.path.basename(file_name)
-            self.title("%s - PyEditor" % self.file_name)
+            self.title("%s - %s" % (self.file_name, self._name))
         except IOError:
             messagebox.showwarning("保存", "保存失败！")
 
@@ -658,6 +648,7 @@ PyEditor V1.0
         new = PyEditor(self.parent, ['-x', str(self.pos_x), '-y',
                                      str(self.pos_y)])
         self.parent.apps.append(new)
+        return new
 
     def __opener__(self, input_file=None):
         def __get_filename__():
@@ -673,7 +664,7 @@ PyEditor V1.0
         if input_file:
             self.file_name = os.path.basename(input_file)
             self.full_path = input_file
-            self.title("%s - PyEditor" % self.file_name)
+            self.title("%s - %s" % (self.file_name, self._name))
             self.content_text.delete(1.0, END)
             with open(input_file, 'rb') as _file:
                 byte = _file.read()

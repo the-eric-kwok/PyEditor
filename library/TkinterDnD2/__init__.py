@@ -1,8 +1,8 @@
 # dnd actions
 try:
-    from TkinterDnD2 import TkinterDnD
-except ModuleNotFoundError:
     from library.TkinterDnD2 import TkinterDnD
+except ModuleNotFoundError:
+    from TkinterDnD2 import TkinterDnD
 PRIVATE = 'private'
 NONE = 'none'
 ASK = 'ask'
