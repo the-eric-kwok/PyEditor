@@ -119,7 +119,8 @@ class PyEditor(Toplevel):
         self._create_menu_bar_()
         self._create_shortcut_bar_()
         self._create_body_()
-        self._create_right_popup_menu()
+        self._init_DnD_()
+        self._create_right_popup_menu_()
         self.change_theme()
         self._update_highlight()
         self.after(500, self.toggle_line_num)
@@ -201,7 +202,7 @@ class PyEditor(Toplevel):
         '''
         file_menu = Menu(menu_bar, tearoff=0)
         file_menu.add_command(
-            label='新建', accelerator=accelerator["new"], command=self.new_file)
+            label='新建', accelerator=accelerator["new"], command=self.new_instance)
         file_menu.add_command(
             label='打开', accelerator=accelerator["open"], command=self.open_file)
         file_menu.add_command(
@@ -320,7 +321,7 @@ class PyEditor(Toplevel):
         for comm, tip in zip(COMMAND, CH_COMM):
             tool_icon = PhotoImage(file=resource_path('%s.gif' % comm))
             tool_btn = Button(shortcut_bar, image=tool_icon,
-                              command=self._shortcut_action(comm))
+                              command=self._shortcut_action_(comm))
             tool_btn.pack(side='left')
             Tooltip(tool_btn, text=tip)  # 鼠标停留会出现提示信息
             self.icon_res.append(tool_icon)
@@ -381,8 +382,8 @@ class PyEditor(Toplevel):
             self.line_number_bar.pack(side='left', fill='y')
 
         # Binding part
-        self.bind(key_binding["new"][0], self.new_file)
-        self.bind(key_binding["new"][1], self.new_file)
+        self.bind(key_binding["new"][0], self.new_instance)
+        self.bind(key_binding["new"][1], self.new_instance)
         self.bind(key_binding["open"][0], self.open_file)
         self.bind(key_binding["open"][1], self.open_file)
         self.bind(key_binding["save"][0], self.save)
@@ -395,13 +396,13 @@ class PyEditor(Toplevel):
         self.bind(key_binding["find"][0], self.find_text)
         self.bind(key_binding["find"][1], self.find_text)
 
-        self.bind('<Key>', self._update_line_num)
-        self.bind("<Button-1>", self._update_line_num)
+        self.bind('<Key>', self._update_line_num_)
+        self.bind("<Button-1>", self._update_line_num_)
         self.bind("<ButtonRelease-1>", self._update_highlight)
         self.y_scroll_bar.bind(
-            "<Button-1>", self._update_line_num)
+            "<Button-1>", self._update_line_num_)
         self.content_text.bind(
-            "<MouseWheel>", self._update_line_num)
+            "<MouseWheel>", self._update_line_num_)
         self.content_text.bind('<Key>', self._update_highlight)
         self.bind('<Button-1>', self._update_highlight)
         # 将鼠标左键点击绑定为将焦点赋予content_text
@@ -411,8 +412,12 @@ class PyEditor(Toplevel):
         self.bind_all('<KeyPress-F1>', lambda e: self.show_messagebox("帮助"))
         self.content_text.tag_configure('active_line', background='#EEEEE0')
         if self.full_path:
-            self.__opener__(self.full_path)
+            self._opener_(self.full_path)
 
+    def _init_DnD_(self):
+        '''
+        初始化和注册 Drag-n-Drop 插件
+        '''
         if TKDND:
             def __drop_files__(self, event):
                 print(event.name, event.data)
@@ -423,8 +428,8 @@ class PyEditor(Toplevel):
                     files = event.data.split(" ")
                 for item in files:
                     if files.index(item) > 0:
-                        new = self.new_file()
-                        new.open_file(file=item)
+                        new = self.new_instance()
+                        new._opener_(file=item)
                     else:
                         self.open_file(file=item)
 
@@ -440,14 +445,14 @@ class PyEditor(Toplevel):
             self.content_text.dnd_bind(
                 '<<Drop:DND_Text>>', lambda e: __drop_text__(self, e))
 
-    def _create_right_popup_menu(self):
+    def _create_right_popup_menu_(self):
         '''
         鼠标右键弹出菜单
         '''
         popup_menu = Menu(self.content_text, tearoff=0)
         for it1, it2 in zip(CH_COMM[3:8], COMMAND[3:8]):
             popup_menu.add_command(label=it1, compound='left',
-                                   command=self._shortcut_action(it2))
+                                   command=self._shortcut_action_(it2))
         popup_menu.add_separator()
         popup_menu.add_command(label='全选', command=self.select_all)
         if platform == "darwin":
@@ -458,7 +463,7 @@ class PyEditor(Toplevel):
             self.content_text.bind(
                 '<Button-3>', lambda event: popup_menu.tk_popup(event.x_root, event.y_root))
 
-    def _update_line_num(self, event=None):
+    def _update_line_num_(self, event=None):
         '''
         更新行号
         '''
@@ -483,12 +488,15 @@ class PyEditor(Toplevel):
                 onPressDelay(self)
 
     def toggle_line_num(self):
+        '''
+        处理菜单栏中“显示行号”选项
+        '''
         self.content_text.get(1.0, END)
         if self.config["line_num"] != bool(self.is_show_line_num.get()):
             self.config["line_num"] = bool(self.is_show_line_num.get())
             self._write_config_()
         if self.config["line_num"]:
-            self._update_line_num()
+            self._update_line_num_()
             # 尝试获取pack信息，获取失败就意味着还没有pack过
             if not self.line_number_bar.winfo_ismapped():
                 self.line_number_bar.pack(side='left', fill='y')
@@ -499,6 +507,9 @@ class PyEditor(Toplevel):
                 pass
 
     def toggle_highlight(self, event=None):
+        '''
+        处理菜单栏中“高亮当前行”选项
+        '''
         self.config["highlight"] = bool(self.is_highlight_line.get())
         self._write_config_()
         self._update_highlight()
@@ -525,7 +536,10 @@ class PyEditor(Toplevel):
             else:
                 __update_highlight__(self)
 
-    def _write_to_file(self, file_name):
+    def _write_to_file_(self, file_name):
+        '''
+        将编辑器中的内容写入文件
+        '''
         try:
             content = self.content_text.get(1.0, 'end')
             b_content = content.encode(self.encoding)
@@ -536,13 +550,13 @@ class PyEditor(Toplevel):
         except IOError:
             messagebox.showwarning("保存", "保存失败！")
 
-    def _shortcut_action(self, type):
+    def _shortcut_action_(self, type):
         '''
         响应快捷菜单
         '''
         def handle():
             if type == "new_file":
-                self.new_file()
+                self.new_instance()
             elif type == "open_file":
                 self.open_file()
             elif type == "save":
@@ -561,7 +575,7 @@ class PyEditor(Toplevel):
                 self.find_text()
 
             if type != "copy" and type != "save":
-                self._update_line_num()
+                self._update_line_num_()
                 if type != "new_file" and type != "open_file":
                     self._sync_title_dirty_()
         return handle
@@ -590,6 +604,9 @@ class PyEditor(Toplevel):
         self.content_text.config(bg=bg_color, fg=fg_color)
 
     def toggle_wrap(self):
+        '''
+        处理菜单栏中“自动换行”选项
+        '''
         if self.is_wrap.get():
             if self.x_scroll_bar.winfo_ismapped():
                 self.x_scroll_bar.pack_forget()
@@ -607,16 +624,19 @@ class PyEditor(Toplevel):
             self.config['wrap'] = False
             self.content_text.config(wrap="none")
 
-        self._update_line_num()
+        self._update_line_num_()
         self._write_config_()
 
     def toggle_font(self):
+        '''
+        处理菜单栏中“更换字体”选项
+        '''
         dialog = FontPanel(self)
         self.wait_window(dialog.top)
         self.config["font_family"] = self.custom_font.cget("family")
         self.config["font_size"] = self.custom_font.cget("size")
         self._write_config_()
-        self._update_line_num()
+        self._update_line_num_()
 
     def handle_menu_action(self, action_type):
         '''
@@ -633,7 +653,7 @@ class PyEditor(Toplevel):
         elif action_type == "粘贴":
             self.content_text.event_generate("<<Paste>>")
         if action_type != "复制":
-            self._update_line_num()
+            self._update_line_num_()
         return "break"
 
     def show_messagebox(self, type):
@@ -652,7 +672,10 @@ PyEditor V1.0
         self.content_text.tag_add('sel', '1.0', 'end')
         return "break"
 
-    def new_file(self, event=None):
+    def new_instance(self, event=None):
+        '''
+        新建实例
+        '''
         self.pos_x += 20
         self.pos_y += 20
         new = PyEditor(self.parent, ['-x', str(self.pos_x), '-y',
@@ -660,60 +683,60 @@ PyEditor V1.0
         self.parent.apps.append(new)
         return new
 
-    def __opener__(self, input_file=None):
-        def __get_filename__():
-            input_file = filedialog.askopenfilename(
-                filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
-                           ("Python code", "*.py"), ("Python code", "*.pyw")],
-                title="选择一个文件")
-            return input_file
-
-        if input_file is None:
-            input_file = __get_filename__()
-
-        if input_file:
-            self.file_name = os.path.basename(input_file)
-            self.full_path = input_file
+    def _opener_(self, file=None):
+        '''
+        从文件加载内容到编辑器中
+        '''
+        if file:
+            self.file_name = os.path.basename(file)
+            self.full_path = file
             self.title("%s - PyEditor" % self.file_name)
             self.content_text.delete(1.0, END)
-            with open(input_file, 'rb') as _file:
+            with open(file, 'rb') as _file:
                 byte = _file.read()
                 result = chardet.detect(byte)
                 text = byte.decode(encoding=result['encoding'])
                 self.content_text.insert(1.0, text)
                 self.encoding = result['encoding']
-        self._update_line_num()
-        self._mark_as_clean_()
+            self._update_line_num_()
+            self._mark_as_clean_()
 
-    def open_file(self, event=None, file=None):
-
-        if self.content_text.edit_modified():
-            dialog = OkCancelSaveBox(self, "你确定要打开新文件吗？\n当前文件中所有的修改都将丢失")
-            self.wait_window(dialog.top)
-            if dialog.get() == "<<Ok>>":
-                self.__opener__(file)
-
-            elif dialog.get() == "<<Save>>":
-                self.save()
-                self.__opener__(file)
+    def open_file(self, file=None, event=None):
+        '''
+        处理“打开文件”事件
+        '''
+        if file is None:
+            file = filedialog.askopenfilename(
+                filetypes=[("All", "*.*"), ("Text file", "*.txt"), ("Markdown", "*.md"),
+                           ("Python code", "*.py"), ("Python code", "*.pyw")],
+                title="选择一个文件")
+        if not self.content_text.compare("end-1c", "==", "1.0"):
+            # If content box is not empty, new a window
+            new = self.new_instance()
+            new._opener_(file=file)
         else:
-            self.__opener__(file)
+            self._opener_(file=file)
 
     def save(self, event=None):
+        '''
+        处理“保存文件”事件
+        '''
         if self.full_path is None:
             self.save_as()
         else:
-            self._write_to_file(self.full_path)
+            self._write_to_file_(self.full_path)
             self._mark_as_clean_()
 
     def save_as(self, event=None):
-        input_file = filedialog.asksaveasfilename(
-            filetypes=[("文本文档", "*.txt"), ("All Files", "*.*")]
-        )
-        if input_file:
-            self.file_name = os.path.basename(input_file)
-            self.full_path = input_file
-            self._write_to_file(self.full_path)
+        '''
+        处理“另存为”事件
+        '''
+        file = filedialog.asksaveasfilename(
+            filetypes=[("文本文档", "*.txt"), ("All Files", "*.*")])
+        if file:
+            self.file_name = os.path.basename(file)
+            self.full_path = file
+            self._write_to_file_(self.full_path)
             self._mark_as_clean_()
 
     def find_text(self, event=None):
@@ -745,7 +768,12 @@ PyEditor V1.0
         search_toplevel.protocol('WM_DELETE_WINDOW', close_search_window)
         return "break"
 
+    # TODO 搜索结果的跳转
+
     def search_result(self, key, ignore_case, search_toplevel, search_box):
+        '''
+        将搜索结果高亮
+        '''
         self.content_text.tag_remove('match', '1.0', "end")
         matches_found = 0
         if key:
@@ -770,9 +798,12 @@ PyEditor V1.0
         处理编辑器关闭操作
         '''
         if self.content_text.edit_modified():
-            dialog = OkCancelSaveBox(self, "你确定要退出吗？\n所有未保存的更改都会丢失")
+            dialog = OkCancelSaveBox(
+                self, title="您确定要退出吗？",
+                text="您可以选择保存此文档，若您选择退出，则所有未保存的更改都将丢失，并且不可恢复",
+                yes="退出", no="返回", save="保存")
             self.wait_window(dialog.top)
-            if dialog.get() == "<<Ok>>":
+            if dialog.get() == "<<Yes>>":
                 self.destroy()
             elif dialog.get() == "<<Save>>":
                 self.save()
@@ -791,7 +822,7 @@ PyEditor V1.0
 
 
 def resource_path(relative_path):
-    """ Get absolute path to resource, works for dev and for PyInstaller """
+    """ 获得资源的绝对路径，主要服务于 PyInstaller """
     try:
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = os.path.join(sys._MEIPASS, 'img')
