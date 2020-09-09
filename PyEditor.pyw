@@ -9,7 +9,6 @@ from getopt import getopt, GetoptError
 from sys import platform
 import sys
 
-import tkinter as tk
 from tkinter import *
 from tkinter import filedialog, messagebox
 from tkinter.ttk import Scrollbar, Checkbutton, Label, Button
@@ -22,23 +21,12 @@ from library.EditorStyle import *
 from library.Tooltip import Tooltip
 from library.OkCancelSaveBox import OkCancelSaveBox
 from library.TextLineNumber import TextLineNumbers
-from library.TkinterDnD2 import *
+from library.TkinterDnD2.TkinterDnD import DnDEvent, _require
 
-tkroot = tk.Tk()
-tkroot.withdraw()
-try:
-    tkroot.tk.call('package', 'require', 'tkdnd')
-    tk = TkinterDnD.Tk
-    TKDND = True
-except TclError:
-    tk = tk.Tk
-    TKDND = False
-finally:
-    tkroot.destroy()
-    tkroot.quit()
+TKDND = False
 
 
-class Root(tk):
+class Root(Tk):
     full_path = None
 
     def __init__(self, argv):
@@ -46,6 +34,12 @@ class Root(tk):
         super().__init__()
         self.withdraw()
         self.title("Root")
+        try:
+            self.TkdndVersion = _require(self)
+            global TKDND
+            TKDND = True
+        except RuntimeError:
+            pass
         self.apps = []
         if self.full_path:
             app = PyEditor(self, ['-f', self.full_path])
@@ -121,16 +115,6 @@ class PyEditor(Toplevel):
         except KeyError:
             self.custom_font = tkFont.Font(self, family='TkFixedFont', size=12)
 
-        if TKDND:
-            def drop(self, event):
-                if event.data[0] == "{" and event.data[-1] == "}":
-                    event.data = event.data[1: -1]
-                self.after(5, lambda: self.open_file(file=event.data))
-                # self.__opener__(event.data)
-
-            self.drop_target_register(DND_FILES)
-            self.dnd_bind('<<Drop>>', lambda e: drop(self, e))
-
         self._set_window_(pos_x=self.pos_x, pos_y=self.pos_y)
         self._create_menu_bar_()
         self._create_shortcut_bar_()
@@ -189,10 +173,7 @@ class PyEditor(Toplevel):
         '''
         设置初始窗口的属性
         '''
-        if self.file_name:
-            self.title(self.file_name)
-        else:
-            self.title("New - PyEditor")
+        self.title("New - PyEditor")
         scn_width, scn_height = self.maxsize()
         if (pos_x == 0 and pos_y == 0) or (pos_x < 0 or pos_y < 0):
             self.pos_x = (scn_width - 750) / 4
@@ -432,6 +413,33 @@ class PyEditor(Toplevel):
         if self.full_path:
             self.__opener__(self.full_path)
 
+        if TKDND:
+            def __drop_files__(self, event):
+                print(event.name, event.data)
+                if event.data[0] == "{" and event.data[-1] == "}":
+                    event.data = event.data[1:-1]
+                    files = event.data.split("} {")
+                else:
+                    files = event.data.split(" ")
+                for item in files:
+                    if files.index(item) > 0:
+                        new = self.new_file()
+                        new.open_file(file=item)
+                    else:
+                        self.open_file(file=item)
+
+            def __drop_text__(self, event):
+                if event.name == '<<Drop:DND_Text>>':
+                    print(event.data, event.x_root, event.y_root)
+                    # TODO 根据 event.x_root, event.y_root 计算出最接近的光标位置进行插入
+
+            self.content_text.drop_target_register("DND_Files")
+            self.content_text.dnd_bind(
+                '<<Drop:DND_Files>>', lambda e: __drop_files__(self, e))
+            self.content_text.drop_target_register("DND_Text")
+            self.content_text.dnd_bind(
+                '<<Drop:DND_Text>>', lambda e: __drop_text__(self, e))
+
     def _create_right_popup_menu(self):
         '''
         鼠标右键弹出菜单
@@ -650,6 +658,7 @@ PyEditor V1.0
         new = PyEditor(self.parent, ['-x', str(self.pos_x), '-y',
                                      str(self.pos_y)])
         self.parent.apps.append(new)
+        return new
 
     def __opener__(self, input_file=None):
         def __get_filename__():
@@ -699,7 +708,7 @@ PyEditor V1.0
 
     def save_as(self, event=None):
         input_file = filedialog.asksaveasfilename(
-            filetypes=[("All Files", "*.*"), ("文本文档", "*.txt")]
+            filetypes=[("文本文档", "*.txt"), ("All Files", "*.*")]
         )
         if input_file:
             self.file_name = os.path.basename(input_file)
