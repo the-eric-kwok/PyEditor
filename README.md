@@ -1,6 +1,14 @@
 # PyEditor
 Simple text editor made with python.
 
+## Features
+- [x] Basic edit/copy/paste/undo/redo
+- [x] Multi-files edit
+- [x] Showing line numbers
+- [x] Hightlight current line
+- [x] Files drag-n-drop
+- [ ] Text drag-n-drop
+
 ## Run
 **Dependency**
 1. Tkinter
