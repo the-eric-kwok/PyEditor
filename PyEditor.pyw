@@ -416,10 +416,12 @@ class PyEditor(Toplevel):
         if TKDND:
             def __drop__(self, event):
                 print(event.name, event.data)
-                files = event.data.split(" ")
+                if event.data[0] == "{" and event.data[-1] == "}":
+                    event.data = event.data[1:-1]
+                    files = event.data.split("} {")
+                else:
+                    files = event.data.split(" ")
                 for item in files:
-                    if event.data[0] == "{" and event.data[-1] == "}":
-                        event.data = event.data[1: -1]
                     if files.index(item) > 0:
                         new = self.new_file()
                         new.open_file(file=item)
