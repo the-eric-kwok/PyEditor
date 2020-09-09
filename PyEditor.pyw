@@ -30,7 +30,7 @@ try:
     tkroot.tk.call('package', 'require', 'tkdnd')
     tk = TkinterDnD.Tk
     TKDND = True
-except RuntimeError:
+except TclError:
     tk = tk.Tk
     TKDND = False
 finally:
