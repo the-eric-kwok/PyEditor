@@ -55,6 +55,8 @@ if __name__ == "__main__":
         command += 'PyEditor.pyw'
         os.system(base_command_1 + command)
         if os.path.exists("dist/PyEditor"):
+            if os.path.exists("dist/PyEditor.bundle"):
+                os.system("rm -rf dist/PyEditor.bundle")
             os.system("mv dist/PyEditor dist/PyEditor.bundle")
         os.system(base_command_2 + command)
 
@@ -63,3 +65,4 @@ if __name__ == "__main__":
         Platform not implemented! Please run
             python3 PyEditor.pyw
         """)
+

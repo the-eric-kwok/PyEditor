@@ -37,7 +37,7 @@ Simple text editor made with python.
 
 4. tkdnd (Optional)
 
-	This is an optional dependancy for supporting Drag-N-Drop feature. It's a little bit of tricky in the installation.
+	This is an optional dependancy for supporting Drag-N-Drop feature. It's a little bit of tricky in the installation. PyEditor can run without it so it's okay to skip this process.
 
 	- Ubuntu / Debian
 
@@ -45,21 +45,33 @@ Simple text editor made with python.
 		```
 		sudo apt-get install tkdnd
 		```
+	
+	- Fedora / RedHat
+		This is untested:
+		```
+		sudo dnf install tkdnd
+		```
+	
+	- Arch Linux
+		
+		There is an AUR called tkdnd, see [here](https://aur.archlinux.org/packages/tkdnd/). But this is untested, you need to find out yourself.
+		
+		For AUR install guide, see [here](https://wiki.archlinux.org/index.php/Arch_User_Repository_(%E7%AE%80%E4%BD%93%E4%B8%AD%E6%96%87)#%E5%AE%89%E8%A3%85%E8%BD%AF%E4%BB%B6%E5%8C%85)
 
-	- Other operating system
+	- Windows & MacOS
 
 		Download tkdnd2.8 from [here](https://sourceforge.net/projects/tkdnd/), make sure you are downloading the right arch. For example, if you are using Python 64-bit on Windows, you should download the Windows 64-bit version.
 
 		**How to check my python version?**
 
-			In your terminal, type `python3` and hit enter, you will see:
+		In your terminal, type `python3` and hit enter, you will see:
 
-			```
-			Python 3.8.5 (tags/v3.8.5:580fbb0, Jul 20 2020, 15:57:54) [MSC v.1924 64 bit (AMD64)] on win32
-			Type "help", "copyright", "credits" or "license" for more information.
-			```
+		```
+		Python 3.8.5 (tags/v3.8.5:580fbb0, Jul 20 2020, 15:57:54) [MSC v.1924 64 bit (AMD64)] on win32
+		Type "help", "copyright", "credits" or "license" for more information.
+		```
 
-			In this example, there is a string "64 bit" and "win32", so we can determine that we are on 64-bit python on Windows.
+		In this example, there is a string "64 bit" and "win32", so we can determine that we are on 64-bit python on Windows.
 
 		Then, 
 
