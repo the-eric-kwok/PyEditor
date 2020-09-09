@@ -24,6 +24,7 @@ from library.OkCancelSaveBox import OkCancelSaveBox
 from library.TextLineNumber import TextLineNumbers
 from library.TkinterDnD2 import *
 
+'''
 tkroot = tk.Tk()
 tkroot.withdraw()
 try:
@@ -36,9 +37,11 @@ except TclError:
 finally:
     tkroot.destroy()
     tkroot.quit()
+'''
+TKDND = False
 
 
-class Root(tk):
+class Root(tk.Tk):
     full_path = None
 
     def __init__(self, argv):
@@ -46,6 +49,12 @@ class Root(tk):
         super().__init__()
         self.withdraw()
         self.title("Root")
+        try:
+            self.TkdndVersion = TkinterDnD._require(self)
+            global TKDND
+            TKDND = True
+        except RuntimeError:
+            pass
         self.apps = []
         if self.full_path:
             app = PyEditor(self, ['-f', self.full_path])
@@ -126,7 +135,6 @@ class PyEditor(Toplevel):
                 if event.data[0] == "{" and event.data[-1] == "}":
                     event.data = event.data[1: -1]
                 self.after(5, lambda: self.open_file(file=event.data))
-                # self.__opener__(event.data)
 
             self.drop_target_register(DND_FILES)
             self.dnd_bind('<<Drop>>', lambda e: drop(self, e))
