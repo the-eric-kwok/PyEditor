@@ -11,8 +11,8 @@ def drop(event):
 
 
 root = tkdnd.Tk()
-text = tk.Text(root, width=50, height=30)
+text = tk.Text(root, width=50, height=10)
 text.pack()
 text.drop_target_register("DND_Text")
-text.dnd_bind('<<Drop>>', drop)
+text.dnd_bind('<<Drop:DND_Text>>', drop)
 root.mainloop()
