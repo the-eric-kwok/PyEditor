@@ -4,15 +4,18 @@ from tkinter.constants import ACTIVE
 
 class OkCancelSaveBox:
 
-    def __init__(self, parent, text="All modifications will be discard", title="Sure?", yes="Quit", no="Back", save="Save", font_sz=12):
+    def __init__(self, parent, text="All modifications will be discard", title="Sure?", yes="Quit", no="Back", save="Save", font=("Helvetica", 11)):
         top = self.top = tk.Toplevel(parent)
         self.answer = ""
         top.resizable(False, False)
         top.title(title)
         lbl = tk.Label(top, text=text, wrap=250,
-                       font=("Helvetica", font_sz))
+                       font=font)
         lbl.place(relx=.5, rely=.4, anchor='c')
-        top.geometry('300x100')
+        x, y = parent.winfo_geometry().split("+")[1:]
+        x = int(x) + int(parent.winfo_width()/2) - 150
+        y = int(y) + int(parent.winfo_height()/2) - 50
+        top.geometry('300x100+%s+%s' % (x, y))
         no_button = tk.Button(top, text=no, command=self.onCancel, width=6)
         no_button.place(relx=0.65, rely=0.8, anchor='c')
         no_button.focus_get()
@@ -24,6 +27,9 @@ class OkCancelSaveBox:
         yes_button.place(relx=0.15, rely=0.8, anchor='c')
         top.protocol('WM_DELETE_WINDOW', self.onCancel)
         top.grab_set()  # 拦截对底下窗口的点击
+        top.lift()
+        top.attributes('-topmost', True)
+        top.focus_force()
 
     def onOk(self):
         self.answer = "<<Yes>>"

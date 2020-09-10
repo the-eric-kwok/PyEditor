@@ -437,9 +437,13 @@ class PyEditor(Toplevel):
                 if event.name == '<<Drop:DND_Text>>':
                     print(event.data, event.x_root, event.y_root)
                     # TODO 根据 event.x_root, event.y_root 计算出最接近的光标位置进行插入
-                    self.content_text.insert("@%d,%d" %
-                                             (event.x_root, event.y_root), event.data)
-                    # self.content_text.insert("@60,306", event.data)
+                    if platform == "win32":
+                        self.content_text.insert(
+                            "@%d,%d" % (event.x_root-230, event.y_root-180), event.data)
+                    elif platform == "darwin":
+                        self.content_text.insert(
+                            "@%d,%d" % (event.x_root-205, event.y_root-110), event.data)
+                    #self.content_text.insert("@60,306", event.data)
 
             self.content_text.drop_target_register("DND_Files")
             self.content_text.dnd_bind(
@@ -804,7 +808,7 @@ PyEditor V1.0
             dialog = OkCancelSaveBox(
                 self, title="您确定要退出吗？",
                 text="您可以选择保存此文档，若您选择退出，则所有未保存的更改都将丢失，并且不可恢复",
-                yes="退出", no="返回", save="保存")
+                yes="退出", no="返回", save="保存", font=("微软雅黑", 10))
             self.wait_window(dialog.top)
             if dialog.get() == "<<Yes>>":
                 self.destroy()
