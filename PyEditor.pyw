@@ -361,7 +361,8 @@ class PyEditor(Toplevel):
         '''
         # 创建文本输入框(undo=True启用撤销机制，设定最小宽度为1，以免行号栏被推出窗口外)
         self.content_text = Text(
-            self, wrap="none", undo=True, width=1, height=1, font=self.custom_font, exportselection=False)
+            self, wrap="none", undo=True, width=1, height=1, 
+            font=self.custom_font, exportselection=False)
         # 创建行号栏
         self.line_number_bar = TextLineNumbers(
             self, width=30, background='#ECECEC')
@@ -437,20 +438,16 @@ class PyEditor(Toplevel):
                 if event.name == '<<Drop:DND_Text>>':
                     print(event.data, event.x_root, event.y_root)
                     # TODO 根据 event.x_root, event.y_root 计算出最接近的光标位置进行插入
-                    if platform == "win32":
-                        self.content_text.insert(
-                            "@%d,%d" % (event.x_root-230, event.y_root-180), event.data)
-                    elif platform == "darwin":
-                        self.content_text.insert(
-                            "@%d,%d" % (event.x_root-205, event.y_root-110), event.data)
-                    #self.content_text.insert("@60,306", event.data)
+                    self.content_text.insert(
+                        "@%d,%d" % (event.x_root-230, event.y_root-180), event.data)
+                    
 
             self.content_text.drop_target_register("DND_Files")
             self.content_text.dnd_bind(
                 '<<Drop:DND_Files>>', lambda e: __drop_files__(self, e))
-            self.content_text.drop_target_register("DND_Text")
-            self.content_text.dnd_bind(
-                '<<Drop:DND_Text>>', lambda e: __drop_text__(self, e))
+            #self.content_text.drop_target_register("DND_Text")
+            #self.content_text.dnd_bind(
+            #    '<<Drop:DND_Text>>', lambda e: __drop_text__(self, e))
 
     def _create_right_popup_menu_(self):
         '''
