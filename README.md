@@ -96,14 +96,14 @@ Simple text editor made with python.
 			Extract tkdnd2.8 which you downloaded in the previous step and put the `tkdnd2.8` folder here.
 
 		- On MacOS:
-			Type `which python3` to see where your python lib is. For example, mine is 
-			```
-			/Library/Frameworks/Python.framework/Versions/3.8/bin/python3
-			```
+			Simply put tkdnd folder under `/Library/Tcl`. If your system don't have that folder, just make a new one. 
 
-			So open Finder, hit Shift-Command-G combo and enter `/Library/Frameworks/Python.framework/Versions/3.8/`. Be careful, the python path should **NOT** include `bin/python3`. Then hit enter. You will see a folder called `lib`, double click and open it. Here is where you want to copy the tkdnd2.8 folder to.
-			
-			In this example, the full path of my python lib is `/Library/Frameworks/Python.framework/Versions/3.8/lib`
+			On command line it will be
+			```
+			cd PathToYourTkdnd2.8Folder
+			sudo mkdir /Library/Tcl
+			sudo cp tkdnd2.8 /Library/Tcl/
+			```
 
 Then run in terminal
 ```
