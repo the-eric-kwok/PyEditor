@@ -702,6 +702,7 @@ PyEditor V1.0
             with open(file, 'rb') as _file:
                 byte = _file.read()
                 result = chardet.detect(byte)
+                print(result['encoding'])
                 text = byte.decode(encoding=result['encoding'])
                 self.content_text.insert(1.0, text)
                 self.encoding = result['encoding']
