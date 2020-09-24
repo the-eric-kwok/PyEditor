@@ -8,6 +8,8 @@ Simple text editor made with python.
 - [x] Hightlight current line
 - [x] Files drag-n-drop
 - [ ] Text drag-n-drop
+- [ ] Code highlighting
+- [ ] Code formatting
 
 ## Run
 **Dependency**
@@ -152,5 +154,6 @@ python3 editor.pyw
 
 
 After that, you will find the executable file or app bundle under dist folder.
+
 
 
